@@ -3,6 +3,11 @@
 name = "libudev"
 version = "0.0.1"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
+description = "Rust wrapper for libudev"
+license = "MIT"
+homepage = "https://github.com/dcuddeback/libudev-rs"
+repository = "https://github.com/dcuddeback/libudev-rs"
+keywords = ["udev", "hardware", "bindings", "sysfs", "systemd"]
 
 [dependencies]
 libudev-sys = "0.1.0"
