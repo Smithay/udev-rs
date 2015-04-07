@@ -1,4 +1,4 @@
-#![feature(libc,unsafe_destructor,std_misc)]
+#![feature(unsafe_destructor,std_misc)]
 
 extern crate libudev_sys as ffi;
 extern crate libc;
