@@ -1,4 +1,4 @@
-#![feature(unsafe_destructor,std_misc)]
+#![feature(std_misc)]
 
 extern crate libudev_sys as ffi;
 extern crate libc;
@@ -130,7 +130,6 @@ pub struct Enumerator<'a> {
     enumerator: *mut ffi::udev_enumerate
 }
 
-#[unsafe_destructor]
 impl<'a> Drop for Enumerator<'a> {
     fn drop(&mut self) {
         unsafe { ffi::udev_enumerate_unref(self.enumerator) };
@@ -275,7 +274,6 @@ pub struct Device<'a> {
     device: *mut ffi::udev_device
 }
 
-#[unsafe_destructor]
 impl<'a> Drop for Device<'a> {
     fn drop(&mut self) {
         unsafe { ffi::udev_device_unref(self.device) };
