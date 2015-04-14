@@ -1,5 +1,3 @@
-#![feature(std_misc)]
-
 extern crate libudev_sys as ffi;
 extern crate libc;
 
@@ -8,7 +6,7 @@ use std::fmt;
 use std::io;
 use std::str;
 
-use std::ffi::{CStr,OsStr,AsOsStr};
+use std::ffi::{CStr,OsStr};
 use std::path::Path;
 use std::str::FromStr;
 
@@ -152,7 +150,7 @@ impl<'a> Enumerator<'a> {
         })
     }
 
-    pub fn match_subsystem<T: AsOsStr>(&mut self, subsystem: T) -> Result<(),Error> {
+    pub fn match_subsystem<T: AsRef<OsStr>>(&mut self, subsystem: T) -> Result<(),Error> {
         let subsystem = try!(util::os_str_to_cstring(subsystem));
 
         util::errno_to_result(unsafe {
@@ -160,7 +158,7 @@ impl<'a> Enumerator<'a> {
         })
     }
 
-    pub fn match_attribute<T: AsOsStr, U: AsOsStr>(&mut self, attribute: T, value: U) -> Result<(),Error> {
+    pub fn match_attribute<T: AsRef<OsStr>, U: AsRef<OsStr>>(&mut self, attribute: T, value: U) -> Result<(),Error> {
         let attribute = try!(util::os_str_to_cstring(attribute));
         let value = try!(util::os_str_to_cstring(value));
 
@@ -169,7 +167,7 @@ impl<'a> Enumerator<'a> {
         })
     }
 
-    pub fn match_sysname<T: AsOsStr>(&mut self, sysname: T) -> Result<(),Error> {
+    pub fn match_sysname<T: AsRef<OsStr>>(&mut self, sysname: T) -> Result<(),Error> {
         let sysname = try!(util::os_str_to_cstring(sysname));
 
         util::errno_to_result(unsafe {
@@ -177,7 +175,7 @@ impl<'a> Enumerator<'a> {
         })
     }
 
-    pub fn match_property<T: AsOsStr, U: AsOsStr>(&mut self, property: T, value: U) -> Result<(),Error> {
+    pub fn match_property<T: AsRef<OsStr>, U: AsRef<OsStr>>(&mut self, property: T, value: U) -> Result<(),Error> {
         let property = try!(util::os_str_to_cstring(property));
         let value = try!(util::os_str_to_cstring(value));
 
@@ -186,7 +184,7 @@ impl<'a> Enumerator<'a> {
         })
     }
 
-    pub fn match_tag<T: AsOsStr>(&mut self, tag: T) -> Result<(),Error> {
+    pub fn match_tag<T: AsRef<OsStr>>(&mut self, tag: T) -> Result<(),Error> {
         let tag = try!(util::os_str_to_cstring(tag));
 
         util::errno_to_result(unsafe {
@@ -200,7 +198,7 @@ impl<'a> Enumerator<'a> {
         })
     }
 
-    pub fn nomatch_subsystem<T: AsOsStr>(&mut self, subsystem: T) -> Result<(),Error> {
+    pub fn nomatch_subsystem<T: AsRef<OsStr>>(&mut self, subsystem: T) -> Result<(),Error> {
         let subsystem = try!(util::os_str_to_cstring(subsystem));
 
         util::errno_to_result(unsafe {
@@ -208,7 +206,7 @@ impl<'a> Enumerator<'a> {
         })
     }
 
-    pub fn nomatch_attribute<T: AsOsStr, U: AsOsStr>(&mut self, attribute: T, value: U) -> Result<(),Error> {
+    pub fn nomatch_attribute<T: AsRef<OsStr>, U: AsRef<OsStr>>(&mut self, attribute: T, value: U) -> Result<(),Error> {
         let attribute = try!(util::os_str_to_cstring(attribute));
         let value = try!(util::os_str_to_cstring(value));
 
@@ -344,7 +342,7 @@ impl<'a> Device<'a> {
         util::ptr_to_os_str(unsafe { ffi::udev_device_get_driver(self.device) })
     }
 
-    pub fn property_value<T: AsOsStr>(&self, property: T) -> Option<&OsStr> {
+    pub fn property_value<T: AsRef<OsStr>>(&self, property: T) -> Option<&OsStr> {
         let prop = match util::os_str_to_cstring(property) {
             Ok(s) => s,
             Err(_) => return None
@@ -355,7 +353,7 @@ impl<'a> Device<'a> {
         })
     }
 
-    pub fn attribute_value<T: AsOsStr>(&self, attribute: T) -> Option<&OsStr> {
+    pub fn attribute_value<T: AsRef<OsStr>>(&self, attribute: T) -> Option<&OsStr> {
         let attr = match util::os_str_to_cstring(attribute) {
             Ok(s) => s,
             Err(_) => return None
@@ -366,7 +364,7 @@ impl<'a> Device<'a> {
         })
     }
 
-    pub fn set_attribute_value<T: AsOsStr, U: AsOsStr>(&mut self, attribute: T, value: U) -> Result<(),Error> {
+    pub fn set_attribute_value<T: AsRef<OsStr>, U: AsRef<OsStr>>(&mut self, attribute: T, value: U) -> Result<(),Error> {
         let attribute = try!(util::os_str_to_cstring(attribute));
         let value = try!(util::os_str_to_cstring(value));
 
@@ -488,7 +486,7 @@ mod util {
     use libc;
     use std::slice;
 
-    use std::ffi::{CString,OsStr,AsOsStr};
+    use std::ffi::{CString,OsStr};
 
     use libc::{c_int,c_char};
 
@@ -509,8 +507,8 @@ mod util {
         OsStr::from_bytes(slice::from_raw_parts(ptr as *const u8, libc::strlen(ptr) as usize))
     }
 
-    pub fn os_str_to_cstring<T: AsOsStr>(s: T) -> Result<CString,Error> {
-        match CString::new(s.as_os_str().as_bytes()) {
+    pub fn os_str_to_cstring<T: AsRef<OsStr>>(s: T) -> Result<CString,Error> {
+        match CString::new(s.as_ref().as_bytes()) {
             Ok(s) => Ok(s),
             Err(_) => return Err(Error::new(ErrorKind::InvalidInput))
         }
