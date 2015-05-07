@@ -26,7 +26,7 @@ Add `libudev` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-libudev = "0.0.2"
+libudev = "0.1.0"
 ```
 
 If you plan to support operating systems other than Linux, you'll need to add `libudev` as a
@@ -34,7 +34,7 @@ target-specific dependency:
 
 ```toml
 [target.x86_64-unknown-linux-gnu.dependencies]
-libudev = "0.0.1"
+libudev = "0.1.0"
 ```
 
 Import the `libudev` crate. The starting point for nearly all `libudev` functionality is to create a
