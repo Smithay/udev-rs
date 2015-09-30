@@ -115,6 +115,10 @@ pub enum EventType {
     Unknown,
 }
 
+impl Default for EventType {
+    fn default() -> EventType { EventType::Unknown }
+}
+
 impl fmt::Display for EventType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match self {
