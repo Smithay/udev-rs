@@ -107,7 +107,7 @@ impl<'a> Monitor<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone,Copy,PartialEq,Eq)]
 pub enum EventType {
     Add,
     Change,
