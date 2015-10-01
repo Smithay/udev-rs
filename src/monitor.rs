@@ -91,7 +91,7 @@ impl<'a> AsRawFd for Monitor<'a> {
 }
 
 impl<'a> Monitor<'a> {
-    pub fn receive_event(&mut self) -> Option<MonitorEvent> {
+    pub fn receive_event<'b>(&'b mut self) -> Option<MonitorEvent<'a>> {
         let device = unsafe {
             ::ffi::udev_monitor_receive_device(self.spec.monitor)
         };
