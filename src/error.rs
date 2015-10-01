@@ -1,18 +1,25 @@
-use std::error;
 use std::ffi::CStr;
 use std::fmt;
 use std::io;
 use std::str;
 
+use std::error::Error as StdError;
+use std::result::Result as StdResult;
+
 use ::libc::c_int;
 
-#[derive(Debug,Clone,Copy)]
+/// A `Result` type for libudev operations.
+pub type Result<T> = StdResult<T,Error>;
+
+/// Types of errors that occur in libudev.
+#[derive(Debug,Clone,Copy,PartialEq,Eq)]
 pub enum ErrorKind {
     NoMem,
     InvalidInput,
     Io(c_int)
 }
 
+/// The error type for libudev operations.
 #[derive(Debug)]
 pub struct Error {
     kind: ErrorKind
@@ -31,22 +38,24 @@ impl Error {
         }
     }
 
+    /// Returns the corresponding `ErrorKind` for this error.
     pub fn kind(&self) -> ErrorKind {
         self.kind
     }
 
+    /// Returns a description of the error.
     pub fn description(&self) -> &str {
         self.strerror()
     }
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(),fmt::Error> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> StdResult<(),fmt::Error> {
         fmt.write_str(self.strerror())
     }
 }
 
-impl error::Error for Error {
+impl StdError for Error {
     fn description(&self) -> &str {
         self.strerror()
     }

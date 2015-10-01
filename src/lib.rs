@@ -4,7 +4,7 @@ extern crate libc;
 pub use context::{Context};
 pub use device::{Device,Properties,Property,Attributes,Attribute};
 pub use enumerator::{Enumerator,Devices};
-pub use error::{ErrorKind,Error};
+pub use error::{Result,Error,ErrorKind};
 pub use monitor::{MonitorSpec,Monitor,EventType,MonitorEvent};
 
 macro_rules! try_alloc {
