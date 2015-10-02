@@ -36,12 +36,12 @@ fn main() {
 }
 
 fn monitor(context: &libudev::Context) -> io::Result<()> {
-    let mut monitor_spec = try!(libudev::MonitorSpec::new(&context));
+    let mut monitor = try!(libudev::Monitor::new(&context));
 
-    try!(monitor_spec.match_subsystem_devtype("usb", "usb_device"));
-    let mut monitor = try!(monitor_spec.listen());
+    try!(monitor.match_subsystem_devtype("usb", "usb_device"));
+    let mut socket = try!(monitor.listen());
 
-    let mut fds = vec!(pollfd { fd: monitor.as_raw_fd(), events: POLLIN, revents: 0 });
+    let mut fds = vec!(pollfd { fd: socket.as_raw_fd(), events: POLLIN, revents: 0 });
 
     loop {
         let result = unsafe { ppoll((&mut fds[..]).as_mut_ptr(), fds.len() as nfds_t, ptr::null_mut(), ptr::null()) };
@@ -50,7 +50,7 @@ fn monitor(context: &libudev::Context) -> io::Result<()> {
             return Err(io::Error::last_os_error());
         }
 
-        let event = match monitor.receive_event() {
+        let event = match socket.receive_event() {
             Some(evt) => evt,
             None => {
                 thread::sleep_ms(10);

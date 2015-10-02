@@ -5,7 +5,7 @@ pub use context::{Context};
 pub use device::{Device,Properties,Property,Attributes,Attribute};
 pub use enumerator::{Enumerator,Devices};
 pub use error::{Result,Error,ErrorKind};
-pub use monitor::{MonitorSpec,Monitor,EventType,MonitorEvent};
+pub use monitor::{Monitor,MonitorSocket,EventType,Event};
 
 macro_rules! try_alloc {
     ($exp:expr) => {{
