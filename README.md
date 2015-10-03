@@ -4,6 +4,8 @@ and Rust lifetimes to ensure safe usage of all `libudev` functionality. The RAII
 that all acquired resources are released when they're no longer needed, and Rust lifetimes ensure
 that resources are released in a proper order.
 
+* [Documentation](http://dcuddeback.github.io/libudev-rs/libudev/)
+
 ## Dependencies
 In order to use the `libudev` crate, you must have a Linux system with the `libudev` library
 installed where it can be found by `pkg-config`. To install `libudev` on Debian-based Linux

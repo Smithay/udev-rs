@@ -7,7 +7,9 @@ description = "Rust wrapper for libudev"
 license = "MIT"
 homepage = "https://github.com/dcuddeback/libudev-rs"
 repository = "https://github.com/dcuddeback/libudev-rs"
+documentation = "http://dcuddeback.github.io/libudev-rs/libudev/"
 keywords = ["udev", "hardware", "bindings", "sysfs", "systemd"]
+readme = "README.md"
 
 [dependencies]
 libudev-sys = "0.1.1"
