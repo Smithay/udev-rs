@@ -23,6 +23,13 @@ fn list_devices(context: &libudev::Context) -> io::Result<()> {
         println!("     driver: {:?}", device.driver());
         println!("    devnode: {:?}", device.devnode());
 
+        if let Some(parent) = device.parent() {
+            println!("     parent: {:?}", parent.syspath());
+        }
+        else {
+            println!("     parent: None");
+        }
+
         println!("  [properties]");
         for property in device.properties() {
             println!("    - {:?} {:?}", property.name(), property.value());

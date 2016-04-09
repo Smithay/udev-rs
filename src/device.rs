@@ -91,6 +91,25 @@ impl<'a> Device<'a> {
         })
     }
 
+    /// Returns the parent of the device.
+    pub fn parent(&self) -> Option<Device> {
+        let ptr = unsafe { ::ffi::udev_device_get_parent(self.device) };
+
+        if !ptr.is_null() {
+            unsafe {
+                ::ffi::udev_device_ref(ptr);
+            }
+
+            Some(Device {
+                _context: self._context,
+                device: ptr,
+            })
+        }
+        else {
+            None
+        }
+    }
+
     /// Returns the subsystem name of the device.
     ///
     /// The subsystem name is a string that indicates which kernel subsystem the device belongs to.
