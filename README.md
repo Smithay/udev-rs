@@ -57,6 +57,10 @@ fn main() {
 }
 ```
 
+## Contributors
+* [dcuddeback](https://github.com/dcuddeback)
+* [Susurrus](https://github.com/Susurrus)
+
 ## License
 Copyright © 2015 David Cuddeback
 
