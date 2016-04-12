@@ -4,6 +4,7 @@ extern crate libc;
 use std::io;
 use std::ptr;
 use std::thread;
+use std::time::Duration;
 
 use std::os::unix::io::{AsRawFd};
 
@@ -53,7 +54,7 @@ fn monitor(context: &libudev::Context) -> io::Result<()> {
         let event = match socket.receive_event() {
             Some(evt) => evt,
             None => {
-                thread::sleep_ms(10);
+                thread::sleep(Duration::from_millis(10));
                 continue;
             }
         };
