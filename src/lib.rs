@@ -12,7 +12,7 @@ macro_rules! try_alloc {
         let ptr = $exp;
 
         if ptr.is_null() {
-            return Err(::error::new(::error::ErrorKind::NoMem));
+            return Err(::error::from_errno(::libc::ENOMEM));
         }
 
         ptr

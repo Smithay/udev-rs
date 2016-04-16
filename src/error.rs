@@ -16,31 +16,29 @@ pub type Result<T> = StdResult<T,Error>;
 pub enum ErrorKind {
     NoMem,
     InvalidInput,
-    Io(c_int)
+    Io(io::ErrorKind)
 }
 
 /// The error type for libudev operations.
 #[derive(Debug)]
 pub struct Error {
-    kind: ErrorKind
+    errno: c_int,
 }
 
 impl Error {
     fn strerror(&self) -> &str {
-        let errno = match self.kind {
-            ErrorKind::NoMem        => ::libc::ENOMEM,
-            ErrorKind::InvalidInput => ::libc::EINVAL,
-            ErrorKind::Io(errno)    => errno
-        };
-
         unsafe {
-            str::from_utf8_unchecked(CStr::from_ptr(::libc::strerror(errno)).to_bytes())
+            str::from_utf8_unchecked(CStr::from_ptr(::libc::strerror(self.errno)).to_bytes())
         }
     }
 
     /// Returns the corresponding `ErrorKind` for this error.
     pub fn kind(&self) -> ErrorKind {
-        self.kind
+        match self.errno {
+            ::libc::ENOMEM => ErrorKind::NoMem,
+            ::libc::EINVAL => ErrorKind::InvalidInput,
+            errno => ErrorKind::Io(io::Error::from_raw_os_error(errno).kind()),
+        }
     }
 
     /// Returns a description of the error.
@@ -62,19 +60,17 @@ impl StdError for Error {
 }
 
 impl From<Error> for io::Error {
-    fn from(err: Error) -> io::Error {
-        io::Error::new(io::ErrorKind::Other, err.strerror())
-    }
-}
+    fn from(error: Error) -> io::Error {
+        let io_error_kind = match error.kind() {
+            ErrorKind::Io(kind) => kind,
+            ErrorKind::InvalidInput => io::ErrorKind::InvalidInput,
+            ErrorKind::NoMem => io::ErrorKind::Other,
+        };
 
-pub fn new(kind: ErrorKind) -> Error {
-    Error { kind: kind }
+        io::Error::new(io_error_kind, error.strerror())
+    }
 }
 
 pub fn from_errno(errno: c_int) -> Error {
-    match -errno {
-        ::libc::ENOMEM => Error { kind: ErrorKind::NoMem },
-        ::libc::EINVAL => Error { kind: ErrorKind::InvalidInput },
-        n              => Error { kind: ErrorKind::Io(n) }
-    }
+    Error { errno: -errno }
 }
