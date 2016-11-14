@@ -114,10 +114,8 @@ impl<'a> Device<'a> {
     ///
     /// The subsystem name is a string that indicates which kernel subsystem the device belongs to.
     /// Examples of subsystem names are `tty`, `vtconsole`, `block`, `scsi`, and `net`.
-    pub fn subsystem(&self) -> &OsStr {
-        unsafe {
-            ::util::ptr_to_os_str_unchecked(::ffi::udev_device_get_subsystem(self.device))
-        }
+    pub fn subsystem(&self) -> Option<&OsStr> {
+        ::util::ptr_to_os_str(unsafe { ::ffi::udev_device_get_subsystem(self.device) })
     }
 
     /// Returns the kernel device name for the device.

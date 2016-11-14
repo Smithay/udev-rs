@@ -63,7 +63,7 @@ fn monitor(context: &libudev::Context) -> io::Result<()> {
                  event.sequence_number(),
                  event.event_type(),
                  event.syspath().to_str().unwrap_or("---"),
-                 event.subsystem().to_str().unwrap_or(""),
+                 event.subsystem().map_or("", |s| { s.to_str().unwrap_or("") }),
                  event.sysname().to_str().unwrap_or(""),
                  event.devtype().map_or("", |s| { s.to_str().unwrap_or("") }));
     }
