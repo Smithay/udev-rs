@@ -59,6 +59,7 @@ fn main() {
 
 ## Contributors
 * [dcuddeback](https://github.com/dcuddeback)
+* [mulkieran](https://github.com/mulkieran)
 * [Susurrus](https://github.com/Susurrus)
 
 ## License
