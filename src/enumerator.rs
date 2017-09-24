@@ -1,10 +1,7 @@
-use std::ffi::{OsStr};
+use std::ffi::OsStr;
 use std::path::Path;
 
-use ::handle::prelude::*;
-
-pub use context::{Context};
-pub use device::{Device};
+use ::{AsRaw, Context, Device, FromRawWithContext};
 
 
 /// An enumeration context.
@@ -12,26 +9,39 @@ pub use device::{Device};
 /// An Enumerator scans `/sys` for devices matching its filters. Filters are added to an Enumerator
 /// by calling its `match_*` and `nomatch_*` methods. After the filters are setup, the
 /// `scan_devices()` method finds devices in `/sys` that match the filters.
-pub struct Enumerator<'a> {
-    context: &'a Context,
-    enumerator: *mut ::ffi::udev_enumerate
+pub struct Enumerator {
+    enumerator: *mut ::ffi::udev_enumerate,
+    context: Context,
 }
 
-impl<'a> Drop for Enumerator<'a> {
+impl Clone for Enumerator {
+    fn clone(&self) -> Enumerator {
+        unsafe { Enumerator::from_raw(&self.context, ::ffi::udev_enumerate_ref(self.enumerator)) }
+    }
+}
+
+impl Drop for Enumerator {
     fn drop(&mut self) {
         unsafe { ::ffi::udev_enumerate_unref(self.enumerator) };
     }
 }
 
-impl<'a> Enumerator<'a> {
-    /// Creates a new Enumerator.
-    pub fn new(context: &'a Context) -> ::Result<Self> {
-        let ptr = try_alloc!(unsafe { ::ffi::udev_enumerate_new(context.as_ptr()) });
+as_ffi!(Enumerator, enumerator, ::ffi::udev_enumerate);
 
-        Ok(Enumerator {
-            context: context,
-            enumerator: ptr
-        })
+impl FromRawWithContext<::ffi::udev_enumerate> for Enumerator {
+    unsafe fn from_raw(context: &Context, ptr: *mut ::ffi::udev_enumerate) -> Enumerator {
+        Enumerator {
+            enumerator: ptr,
+            context: context.clone(),
+        }
+    }
+}
+
+impl Enumerator {
+    /// Creates a new Enumerator.
+    pub fn new(context: &Context) -> ::Result<Self> {
+        let ptr = try_alloc!(unsafe { ::ffi::udev_enumerate_new(context.as_raw()) });
+        Ok(unsafe { Enumerator::from_raw(context, ptr) })
     }
 
     /// Adds a filter that matches only initialized devices.
@@ -91,7 +101,7 @@ impl<'a> Enumerator<'a> {
     /// Includes the parent device and all devices in the subtree of the parent device.
     pub fn match_parent(&mut self, parent: &Device) -> ::Result<()> {
         ::util::errno_to_result(unsafe {
-            ::ffi::udev_enumerate_add_match_parent(self.enumerator, parent.as_ptr())
+            ::ffi::udev_enumerate_add_match_parent(self.enumerator, parent.as_raw())
         })
     }
 
@@ -132,7 +142,7 @@ impl<'a> Enumerator<'a> {
         }));
 
         Ok(Devices {
-            enumerator: self,
+            enumerator: self.clone(),
             entry: unsafe { ::ffi::udev_enumerate_get_list_entry(self.enumerator) }
         })
     }
@@ -140,15 +150,15 @@ impl<'a> Enumerator<'a> {
 
 
 /// Iterator over devices.
-pub struct Devices<'a> {
-    enumerator: &'a Enumerator<'a>,
+pub struct Devices {
+    enumerator: Enumerator,
     entry: *mut ::ffi::udev_list_entry
 }
 
-impl<'a> Iterator for Devices<'a> {
-    type Item = Device<'a>;
+impl Iterator for Devices {
+    type Item = Device;
 
-    fn next(&mut self) -> Option<Device<'a>> {
+    fn next(&mut self) -> Option<Device> {
         while !self.entry.is_null() {
             let syspath = Path::new(unsafe {
                 ::util::ptr_to_os_str_unchecked(::ffi::udev_list_entry_get_name(self.entry))

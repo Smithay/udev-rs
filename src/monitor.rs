@@ -1,13 +1,11 @@
 use std::fmt;
 use std::ptr;
 
-use std::ffi::{CString,OsStr};
+use std::ffi::{CString, OsStr};
 use std::ops::Deref;
-use std::os::unix::io::{RawFd,AsRawFd};
+use std::os::unix::io::{RawFd, AsRawFd};
 
-use ::context::{Context};
-use ::device::{Device};
-use ::handle::prelude::*;
+use ::{AsRaw, Context, Device, FromRawWithContext};
 
 
 /// Monitors for device events.
@@ -15,12 +13,12 @@ use ::handle::prelude::*;
 /// A monitor communicates with the kernel over a socket. Filtering events is performed efficiently
 /// in the kernel, and only events that match the filters are received by the socket. Filters must
 /// be setup before listening for events.
-pub struct Monitor<'a> {
-    context: &'a Context,
-    monitor: *mut ::ffi::udev_monitor
+pub struct MonitorBuilder {
+    monitor: *mut ::ffi::udev_monitor,
+    context: Context,
 }
 
-impl<'a> Drop for Monitor<'a> {
+impl Drop for MonitorBuilder {
     fn drop(&mut self) {
         unsafe {
             ::ffi::udev_monitor_unref(self.monitor);
@@ -28,19 +26,27 @@ impl<'a> Drop for Monitor<'a> {
     }
 }
 
-impl<'a> Monitor<'a> {
+as_ffi!(MonitorBuilder, monitor, ::ffi::udev_monitor);
+
+impl FromRawWithContext<::ffi::udev_monitor> for MonitorBuilder {
+    unsafe fn from_raw(context: &Context, ptr: *mut ::ffi::udev_monitor) -> MonitorBuilder {
+        MonitorBuilder {
+            monitor: ptr,
+            context: context.clone(),
+        }
+    }
+}
+
+impl MonitorBuilder {
     /// Creates a new `Monitor`.
-    pub fn new(context: &'a Context) -> ::Result<Self> {
+    pub fn new(context: &Context) -> ::Result<Self> {
         let name = CString::new("udev").unwrap();
 
         let ptr = try_alloc!(unsafe {
-            ::ffi::udev_monitor_new_from_netlink(context.as_ptr(), name.as_ptr())
+            ::ffi::udev_monitor_new_from_netlink(context.as_raw(), name.as_ptr())
         });
 
-        Ok(Monitor {
-            context: context,
-            monitor: ptr
-        })
+        Ok(unsafe { MonitorBuilder::from_raw(context, ptr) })
     }
 
     /// Adds a filter that matches events for devices with the given subsystem.
@@ -81,7 +87,7 @@ impl<'a> Monitor<'a> {
     /// Listens for events matching the current filters.
     ///
     /// This method consumes the `Monitor`.
-    pub fn listen(self) -> ::Result<MonitorSocket<'a>> {
+    pub fn listen(self) -> ::Result<MonitorSocket> {
         try!(::util::errno_to_result(unsafe {
             ::ffi::udev_monitor_enable_receiving(self.monitor)
         }));
@@ -99,12 +105,37 @@ impl<'a> Monitor<'a> {
 /// Monitors are initially setup to receive events from the kernel via a nonblocking socket. A
 /// variant of `poll()` should be used on the file descriptor returned by the `AsRawFd` trait to
 /// wait for new events.
-pub struct MonitorSocket<'a> {
-    inner: Monitor<'a>
+pub struct MonitorSocket {
+    inner: MonitorBuilder,
 }
 
+impl Clone for MonitorSocket {
+    fn clone(&self) -> MonitorSocket {
+        MonitorSocket {
+            inner: unsafe { MonitorBuilder::from_raw(&self.inner.context, ::ffi::udev_monitor_ref(self.inner.monitor)) },
+        }
+    }
+}
+
+impl AsRaw<::ffi::udev_monitor> for MonitorSocket {
+    fn as_raw(&self) -> *mut ::ffi::udev_monitor {
+        self.inner.monitor
+    }
+
+    fn into_raw(self) -> *mut ::ffi::udev_monitor {
+        self.inner.monitor
+    }
+}
+
+impl FromRawWithContext<::ffi::udev_monitor> for MonitorSocket {
+    unsafe fn from_raw(context: &Context, ptr: *mut ::ffi::udev_monitor) -> MonitorSocket {
+        MonitorSocket {
+            inner: MonitorBuilder::from_raw(context, ptr),
+        }
+    }
+}
 /// Provides raw access to the monitor's socket.
-impl<'a> AsRawFd for MonitorSocket<'a> {
+impl AsRawFd for MonitorSocket {
     /// Returns the file descriptor of the monitor's socket.
     fn as_raw_fd(&self) -> RawFd {
         unsafe {
@@ -113,21 +144,19 @@ impl<'a> AsRawFd for MonitorSocket<'a> {
     }
 }
 
-impl<'a> MonitorSocket<'a> {
+impl MonitorSocket {
     /// Receives the next available event from the monitor.
     ///
     /// This method does not block. If no events are available, it returns `None` immediately.
-    pub fn receive_event<'b>(&'b mut self) -> Option<Event<'a>> {
-        let device = unsafe {
+    pub fn receive_event(&mut self) -> Option<Event> {
+        let ptr = unsafe {
             ::ffi::udev_monitor_receive_device(self.inner.monitor)
         };
 
-        if device.is_null() {
+        if ptr.is_null() {
             None
-        }
-        else {
-            let device = ::device::new(self.inner.context, device);
-
+        } else {
+            let device = unsafe { ::Device::from_raw(&self.inner.context, ptr) };
             Some(Event { device: device })
         }
     }
@@ -166,22 +195,21 @@ impl fmt::Display for EventType {
     }
 }
 
-
 /// An event that indicates a change in device state.
-pub struct Event<'a> {
-    device: Device<'a>
+pub struct Event {
+    device: Device
 }
 
 /// Provides access to the device associated with the event.
-impl<'a> Deref for Event<'a> {
-    type Target = Device<'a>;
+impl Deref for Event {
+    type Target = Device;
 
-    fn deref(&self) -> &Device<'a> {
+    fn deref(&self) -> &Device {
         &self.device
     }
 }
 
-impl<'a> Event<'a> {
+impl Event {
     /// Returns the `EventType` corresponding to this event.
     pub fn event_type(&self) -> EventType {
         let value = match self.device.property_value("ACTION") {
@@ -200,12 +228,12 @@ impl<'a> Event<'a> {
     /// Returns the event's sequence number.
     pub fn sequence_number(&self) -> u64 {
         unsafe {
-            ::ffi::udev_device_get_seqnum(self.device.as_ptr()) as u64
+            ::ffi::udev_device_get_seqnum(self.device.as_raw()) as u64
         }
     }
 
     /// Returns the device associated with this event.
-    pub fn device(&self) -> &Device {
-        &self.device
+    pub fn device(&self) -> Device {
+        self.device.clone()
     }
 }

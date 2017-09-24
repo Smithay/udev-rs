@@ -1,11 +1,18 @@
 use std::path::Path;
 
-use ::device::{Device};
-use ::handle::{Handle};
+use ::{Device, FromRaw, FromRawWithContext};
 
 /// A libudev context.
 pub struct Context {
     udev: *mut ::ffi::udev
+}
+
+impl Clone for Context {
+    fn clone(&self) -> Context {
+        Context {
+            udev: unsafe { ::ffi::udev_ref(self.udev) }
+        }
+    }
 }
 
 impl Drop for Context {
@@ -16,10 +23,13 @@ impl Drop for Context {
     }
 }
 
-#[doc(hidden)]
-impl Handle<::ffi::udev> for Context {
-    fn as_ptr(&self) -> *mut ::ffi::udev {
-        self.udev
+as_ffi!(Context, udev, ::ffi::udev);
+
+impl FromRaw<::ffi::udev> for Context {
+    unsafe fn from_raw(ptr: *mut ::ffi::udev) -> Context {
+        Context {
+            udev: ptr,
+        }
     }
 }
 
@@ -27,8 +37,7 @@ impl Context {
     /// Creates a new context.
     pub fn new() -> ::Result<Self> {
         let ptr = try_alloc!(unsafe { ::ffi::udev_new() });
-
-        Ok(Context { udev: ptr })
+        Ok(unsafe { Context::from_raw(ptr) })
     }
 
     /// Creates a device for a given syspath.
@@ -42,6 +51,6 @@ impl Context {
             ::ffi::udev_device_new_from_syspath(self.udev, syspath.as_ptr())
         });
 
-        Ok(::device::new(self, ptr))
+        Ok(unsafe { Device::from_raw(self, ptr) })
     }
 }
