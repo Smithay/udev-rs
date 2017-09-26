@@ -14,8 +14,11 @@ pub type Result<T> = StdResult<T,Error>;
 /// Types of errors that occur in libudev.
 #[derive(Debug,Clone,Copy,PartialEq,Eq)]
 pub enum ErrorKind {
+    /// Allocation failed
     NoMem,
+    /// Invalid arguments
     InvalidInput,
+    /// I/O Error
     Io(io::ErrorKind)
 }
 
