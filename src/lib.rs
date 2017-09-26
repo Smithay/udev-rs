@@ -8,7 +8,7 @@ extern crate libudev_sys as ffi;
 extern crate libc;
 
 pub use context::Context;
-pub use device::{Device, Properties, Property, Attributes, Attribute};
+pub use device::{Device, DeviceType, Properties, Property, Attributes, Attribute};
 pub use enumerator::{Enumerator, Devices};
 pub use error::{Result, Error, ErrorKind};
 pub use monitor::{MonitorBuilder, MonitorSocket, EventType, Event};

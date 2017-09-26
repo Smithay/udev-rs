@@ -39,6 +39,15 @@ impl FromRawWithContext<::ffi::udev_device> for Device {
     }
 }
 
+/// Device Type
+#[repr(u8)]
+pub enum DeviceType {
+    /// Block Device
+    BlockDevice = 'b' as u8,
+    /// Character Device
+    CharacterDevice = 'c' as u8,
+}
+
 impl Device {
     /// Checks whether the device has already been handled by udev.
     ///
