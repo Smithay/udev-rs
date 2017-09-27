@@ -144,11 +144,10 @@ impl AsRawFd for MonitorSocket {
     }
 }
 
-impl MonitorSocket {
-    /// Receives the next available event from the monitor.
-    ///
-    /// This method does not block. If no events are available, it returns `None` immediately.
-    pub fn receive_event(&mut self) -> Option<Event> {
+impl Iterator for MonitorSocket {
+    type Item = Event;
+    
+    fn next(&mut self) -> Option<Event> {
         let ptr = unsafe {
             ::ffi::udev_monitor_receive_device(self.inner.monitor)
         };
