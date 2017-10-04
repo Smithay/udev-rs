@@ -2,6 +2,7 @@ use std::str;
 
 use std::ffi::{CStr,OsStr};
 use std::path::Path;
+use std::ptr;
 use std::str::FromStr;
 
 use libc::{c_char,dev_t};
@@ -110,6 +111,31 @@ impl Device {
             Some(unsafe { Device::from_raw(&self.context, ::ffi::udev_device_ref(ptr)) })
         } else {
             None
+        }
+    }
+
+    /// Returns the parent of the device with the matching subsystem and devtype if any.
+    pub fn parent_with_subsystem(&self, subsystem: &Path) -> ::Result<Option<Device>> {
+        let subsystem = try!(::util::os_str_to_cstring(subsystem));
+        let ptr = unsafe { ::ffi::udev_device_get_parent_with_subsystem_devtype(self.device, subsystem.as_ptr(), ptr::null()) };
+
+        if !ptr.is_null() {
+            Ok(Some(unsafe { Device::from_raw(&self.context, ::ffi::udev_device_ref(ptr)) }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Returns the parent of the device with the matching subsystem and devtype if any.
+    pub fn parent_with_subsystem_devtype(&self, subsystem: &Path, devtype: &Path) -> ::Result<Option<Device>> {
+        let subsystem = try!(::util::os_str_to_cstring(subsystem));
+        let devtype = try!(::util::os_str_to_cstring(devtype));
+        let ptr = unsafe { ::ffi::udev_device_get_parent_with_subsystem_devtype(self.device, subsystem.as_ptr(), devtype.as_ptr()) };
+
+        if !ptr.is_null() {
+            Ok(Some(unsafe { Device::from_raw(&self.context, ::ffi::udev_device_ref(ptr)) }))
+        } else {
+            Ok(None)
         }
     }
 
