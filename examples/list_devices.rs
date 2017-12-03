@@ -1,14 +1,14 @@
-extern crate libudev;
+extern crate udev;
 
 use std::io;
 
 fn main() {
-    let context = libudev::Context::new().unwrap();
+    let context = udev::Context::new().unwrap();
     list_devices(&context).unwrap();
 }
 
-fn list_devices(context: &libudev::Context) -> io::Result<()> {
-    let mut enumerator = try!(libudev::Enumerator::new(&context));
+fn list_devices(context: &udev::Context) -> io::Result<()> {
+    let mut enumerator = try!(udev::Enumerator::new(&context));
 
     for device in try!(enumerator.scan_devices()) {
         println!("");

@@ -1,4 +1,4 @@
-extern crate libudev;
+extern crate udev;
 extern crate libc;
 
 use std::io;
@@ -6,9 +6,9 @@ use std::ptr;
 use std::thread;
 use std::time::Duration;
 
-use std::os::unix::io::{AsRawFd};
+use std::os::unix::io::AsRawFd;
 
-use libc::{c_void,c_int,c_short,c_ulong,timespec};
+use libc::{c_void,c_int,c_short,c_ulong};
 
 #[repr(C)]
 struct pollfd {
@@ -32,12 +32,12 @@ extern "C" {
 }
 
 fn main() {
-    let context = libudev::Context::new().unwrap();
+    let context = udev::Context::new().unwrap();
     monitor(&context).unwrap();
 }
 
-fn monitor(context: &libudev::Context) -> io::Result<()> {
-    let mut monitor = try!(libudev::Monitor::new(&context));
+fn monitor(context: &udev::Context) -> io::Result<()> {
+    let mut monitor = try!(udev::MonitorBuilder::new(&context));
 
     try!(monitor.match_subsystem_devtype("usb", "usb_device"));
     let mut socket = try!(monitor.listen());
@@ -51,7 +51,7 @@ fn monitor(context: &libudev::Context) -> io::Result<()> {
             return Err(io::Error::last_os_error());
         }
 
-        let event = match socket.receive_event() {
+        let event = match socket.next() {
             Some(evt) => evt,
             None => {
                 thread::sleep(Duration::from_millis(10));

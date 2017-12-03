@@ -1,13 +1,13 @@
 [package]
-name = "libudev"
+name = "udev"
 version = "0.2.0"
-authors = ["David Cuddeback <david.cuddeback@gmail.com>"]
-description = "Rust wrapper for libudev"
+authors = ["David Cuddeback <david.cuddeback@gmail.com>", "Victor Brekenfeld <github@drakulix.de>"]
+description = "libudev bindings for Rust"
 license = "MIT"
-homepage = "https://github.com/dcuddeback/libudev-rs"
-repository = "https://github.com/dcuddeback/libudev-rs"
-documentation = "http://dcuddeback.github.io/libudev-rs/libudev/"
-keywords = ["udev", "hardware", "bindings", "sysfs", "systemd"]
+homepage = "https://github.com/Smithay/udev-rs"
+repository = "https://github.com/Smithay/udev-rs"
+documentation = "http://docs.rs/udev/"
+keywords = ["udev", "hardware", "bindings", "sysfs"]
 readme = "README.md"
 
 [dependencies]

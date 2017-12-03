@@ -232,7 +232,7 @@ impl Device {
     ///
     /// ```no_run
     /// # use std::path::Path;
-    /// # let mut context = libudev::Context::new().unwrap();
+    /// # let mut context = udev::Context::new().unwrap();
     /// # let device = context.device_from_syspath(Path::new("/sys/devices/virtual/tty/tty0")).unwrap();
     /// for property in device.properties() {
     ///     println!("{:?} = {:?}", property.name(), property.value());
@@ -253,7 +253,7 @@ impl Device {
     ///
     /// ```no_run
     /// # use std::path::Path;
-    /// # let mut context = libudev::Context::new().unwrap();
+    /// # let mut context = udev::Context::new().unwrap();
     /// # let device = context.device_from_syspath(Path::new("/sys/devices/virtual/tty/tty0")).unwrap();
     /// for attribute in device.attributes() {
     ///     println!("{:?} = {:?}", attribute.name(), attribute.value());
