@@ -28,7 +28,7 @@ Add `udev` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-udev = "0.2"
+udev = "0.3"
 ```
 
 If you plan to support operating systems other than Linux, you'll need to add `udev` as a
@@ -36,18 +36,16 @@ target-specific dependency:
 
 ```toml
 [target.x86_64-unknown-linux-gnu.dependencies]
-udev = "0.2"
+udev = "0.3"
 ```
 
-Import the `udev` crate. The starting point for nearly all `udev` functionality is to create a
-context object.
+Import the `udev` crate.
 
 ```rust
 extern crate udev;
 
 fn main() {
-  let context = udev::Context::new().unwrap();
-  let mut enumerator = udev::Enumerator::new(&context).unwrap();
+  let mut enumerator = udev::Enumerator::new().unwrap();
 
   enumerator.match_subsystem("tty").unwrap();
 

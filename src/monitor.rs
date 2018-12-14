@@ -3,10 +3,9 @@ use std::ptr;
 
 use std::ffi::{CString, OsStr};
 use std::ops::Deref;
-use std::os::unix::io::{RawFd, AsRawFd};
+use std::os::unix::io::{AsRawFd, RawFd};
 
-use ::{AsRaw, Context, Device, FromRawWithContext};
-
+use {AsRaw, Device, FromRaw};
 
 /// Monitors for device events.
 ///
@@ -15,7 +14,6 @@ use ::{AsRaw, Context, Device, FromRawWithContext};
 /// be setup before listening for events.
 pub struct MonitorBuilder {
     monitor: *mut ::ffi::udev_monitor,
-    context: Context,
 }
 
 impl Drop for MonitorBuilder {
@@ -28,25 +26,16 @@ impl Drop for MonitorBuilder {
 
 as_ffi!(MonitorBuilder, monitor, ::ffi::udev_monitor);
 
-impl FromRawWithContext<::ffi::udev_monitor> for MonitorBuilder {
-    unsafe fn from_raw(context: &Context, ptr: *mut ::ffi::udev_monitor) -> MonitorBuilder {
-        MonitorBuilder {
-            monitor: ptr,
-            context: context.clone(),
-        }
-    }
-}
-
 impl MonitorBuilder {
     /// Creates a new `Monitor`.
-    pub fn new(context: &Context) -> ::Result<Self> {
+    pub fn new() -> ::Result<Self> {
         let name = CString::new("udev").unwrap();
 
         let ptr = try_alloc!(unsafe {
-            ::ffi::udev_monitor_new_from_netlink(context.as_raw(), name.as_ptr())
+            ::ffi::udev_monitor_new_from_netlink(ptr::null_mut(), name.as_ptr())
         });
 
-        Ok(unsafe { MonitorBuilder::from_raw(context, ptr) })
+        Ok(unsafe { MonitorBuilder::from_raw(ptr) })
     }
 
     /// Adds a filter that matches events for devices with the given subsystem.
@@ -54,17 +43,29 @@ impl MonitorBuilder {
         let subsystem = try!(::util::os_str_to_cstring(subsystem));
 
         ::util::errno_to_result(unsafe {
-            ::ffi::udev_monitor_filter_add_match_subsystem_devtype(self.monitor, subsystem.as_ptr(), ptr::null())
+            ::ffi::udev_monitor_filter_add_match_subsystem_devtype(
+                self.monitor,
+                subsystem.as_ptr(),
+                ptr::null(),
+            )
         })
     }
 
     /// Adds a filter that matches events for devices with the given subsystem and device type.
-    pub fn match_subsystem_devtype<T: AsRef<OsStr>, U: AsRef<OsStr>>(&mut self, subsystem: T, devtype: U) -> ::Result<()> {
+    pub fn match_subsystem_devtype<T: AsRef<OsStr>, U: AsRef<OsStr>>(
+        &mut self,
+        subsystem: T,
+        devtype: U,
+    ) -> ::Result<()> {
         let subsystem = try!(::util::os_str_to_cstring(subsystem));
         let devtype = try!(::util::os_str_to_cstring(devtype));
 
         ::util::errno_to_result(unsafe {
-            ::ffi::udev_monitor_filter_add_match_subsystem_devtype(self.monitor, subsystem.as_ptr(), devtype.as_ptr())
+            ::ffi::udev_monitor_filter_add_match_subsystem_devtype(
+                self.monitor,
+                subsystem.as_ptr(),
+                devtype.as_ptr(),
+            )
         })
     }
 
@@ -79,9 +80,7 @@ impl MonitorBuilder {
 
     /// Removes all filters currently set on the monitor.
     pub fn clear_filters(&mut self) -> ::Result<()> {
-        ::util::errno_to_result(unsafe {
-            ::ffi::udev_monitor_filter_remove(self.monitor)
-        })
+        ::util::errno_to_result(unsafe { ::ffi::udev_monitor_filter_remove(self.monitor) })
     }
 
     /// Listens for events matching the current filters.
@@ -95,7 +94,6 @@ impl MonitorBuilder {
         Ok(MonitorSocket { inner: self })
     }
 }
-
 
 /// An active monitor that can receive events.
 ///
@@ -112,7 +110,7 @@ pub struct MonitorSocket {
 impl Clone for MonitorSocket {
     fn clone(&self) -> MonitorSocket {
         MonitorSocket {
-            inner: unsafe { MonitorBuilder::from_raw(&self.inner.context, ::ffi::udev_monitor_ref(self.inner.monitor)) },
+            inner: unsafe { MonitorBuilder::from_raw(::ffi::udev_monitor_ref(self.inner.monitor)) },
         }
     }
 }
@@ -127,42 +125,31 @@ impl AsRaw<::ffi::udev_monitor> for MonitorSocket {
     }
 }
 
-impl FromRawWithContext<::ffi::udev_monitor> for MonitorSocket {
-    unsafe fn from_raw(context: &Context, ptr: *mut ::ffi::udev_monitor) -> MonitorSocket {
-        MonitorSocket {
-            inner: MonitorBuilder::from_raw(context, ptr),
-        }
-    }
-}
 /// Provides raw access to the monitor's socket.
 impl AsRawFd for MonitorSocket {
     /// Returns the file descriptor of the monitor's socket.
     fn as_raw_fd(&self) -> RawFd {
-        unsafe {
-            ::ffi::udev_monitor_get_fd(self.inner.monitor)
-        }
+        unsafe { ::ffi::udev_monitor_get_fd(self.inner.monitor) }
     }
 }
 
 impl Iterator for MonitorSocket {
     type Item = Event;
-    
+
     fn next(&mut self) -> Option<Event> {
-        let ptr = unsafe {
-            ::ffi::udev_monitor_receive_device(self.inner.monitor)
-        };
+        let ptr = unsafe { ::ffi::udev_monitor_receive_device(self.inner.monitor) };
 
         if ptr.is_null() {
             None
         } else {
-            let device = unsafe { ::Device::from_raw(&self.inner.context, ptr) };
-            Some(Event { device: device })
+            let device = unsafe { ::Device::from_raw(ptr) };
+            Some(Event { device })
         }
     }
 }
 
 /// Types of events that can be received from udev.
-#[derive(Debug,Clone,Copy,PartialEq,Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EventType {
     /// A device was added.
     Add,
@@ -173,10 +160,10 @@ pub enum EventType {
     /// A device was removed.
     Remove,
 
-    /// A device was bind to driver.
+    /// A device was bound to driver.
     Bind,
 
-    /// A device was unbind to driver.
+    /// A device was unbound to driver.
     Unbind,
 
     /// An unknown event occurred.
@@ -204,7 +191,7 @@ impl fmt::Display for EventType {
 
 /// An event that indicates a change in device state.
 pub struct Event {
-    device: Device
+    device: Device,
 }
 
 /// Provides access to the device associated with the event.
@@ -221,7 +208,7 @@ impl Event {
     pub fn event_type(&self) -> EventType {
         let value = match self.device.property_value("ACTION") {
             Some(s) => s.to_str(),
-            None => None
+            None => None,
         };
 
         match value {
@@ -230,15 +217,13 @@ impl Event {
             Some("remove") => EventType::Remove,
             Some("bind") => EventType::Bind,
             Some("unbind") => EventType::Unbind,
-            _ => EventType::Unknown
+            _ => EventType::Unknown,
         }
     }
 
     /// Returns the event's sequence number.
     pub fn sequence_number(&self) -> u64 {
-        unsafe {
-            ::ffi::udev_device_get_seqnum(self.device.as_raw()) as u64
-        }
+        unsafe { ::ffi::udev_device_get_seqnum(self.device.as_raw()) as u64 }
     }
 
     /// Returns the device associated with this event.

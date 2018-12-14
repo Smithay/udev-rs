@@ -1,8 +1,8 @@
 use std::ffi::OsStr;
 use std::path::Path;
+use std::ptr;
 
-use ::{AsRaw, Context, Device, FromRawWithContext};
-
+use {AsRaw, Device, FromRaw};
 
 /// An enumeration context.
 ///
@@ -11,12 +11,11 @@ use ::{AsRaw, Context, Device, FromRawWithContext};
 /// `scan_devices()` method finds devices in `/sys` that match the filters.
 pub struct Enumerator {
     enumerator: *mut ::ffi::udev_enumerate,
-    context: Context,
 }
 
 impl Clone for Enumerator {
     fn clone(&self) -> Enumerator {
-        unsafe { Enumerator::from_raw(&self.context, ::ffi::udev_enumerate_ref(self.enumerator)) }
+        unsafe { Enumerator::from_raw(::ffi::udev_enumerate_ref(self.enumerator)) }
     }
 }
 
@@ -28,20 +27,11 @@ impl Drop for Enumerator {
 
 as_ffi!(Enumerator, enumerator, ::ffi::udev_enumerate);
 
-impl FromRawWithContext<::ffi::udev_enumerate> for Enumerator {
-    unsafe fn from_raw(context: &Context, ptr: *mut ::ffi::udev_enumerate) -> Enumerator {
-        Enumerator {
-            enumerator: ptr,
-            context: context.clone(),
-        }
-    }
-}
-
 impl Enumerator {
     /// Creates a new Enumerator.
-    pub fn new(context: &Context) -> ::Result<Self> {
-        let ptr = try_alloc!(unsafe { ::ffi::udev_enumerate_new(context.as_raw()) });
-        Ok(unsafe { Enumerator::from_raw(context, ptr) })
+    pub fn new() -> ::Result<Self> {
+        let ptr = try_alloc!(unsafe { ::ffi::udev_enumerate_new(ptr::null_mut()) });
+        Ok(unsafe { Enumerator::from_raw(ptr) })
     }
 
     /// Adds a filter that matches only initialized devices.
@@ -61,12 +51,20 @@ impl Enumerator {
     }
 
     /// Adds a filter that matches only devices with the given attribute value.
-    pub fn match_attribute<T: AsRef<OsStr>, U: AsRef<OsStr>>(&mut self, attribute: T, value: U) -> ::Result<()> {
+    pub fn match_attribute<T: AsRef<OsStr>, U: AsRef<OsStr>>(
+        &mut self,
+        attribute: T,
+        value: U,
+    ) -> ::Result<()> {
         let attribute = try!(::util::os_str_to_cstring(attribute));
         let value = try!(::util::os_str_to_cstring(value));
 
         ::util::errno_to_result(unsafe {
-            ::ffi::udev_enumerate_add_match_sysattr(self.enumerator, attribute.as_ptr(), value.as_ptr())
+            ::ffi::udev_enumerate_add_match_sysattr(
+                self.enumerator,
+                attribute.as_ptr(),
+                value.as_ptr(),
+            )
         })
     }
 
@@ -80,12 +78,20 @@ impl Enumerator {
     }
 
     /// Adds a filter that matches only devices with the given property value.
-    pub fn match_property<T: AsRef<OsStr>, U: AsRef<OsStr>>(&mut self, property: T, value: U) -> ::Result<()> {
+    pub fn match_property<T: AsRef<OsStr>, U: AsRef<OsStr>>(
+        &mut self,
+        property: T,
+        value: U,
+    ) -> ::Result<()> {
         let property = try!(::util::os_str_to_cstring(property));
         let value = try!(::util::os_str_to_cstring(value));
 
         ::util::errno_to_result(unsafe {
-            ::ffi::udev_enumerate_add_match_property(self.enumerator, property.as_ptr(), value.as_ptr())
+            ::ffi::udev_enumerate_add_match_property(
+                self.enumerator,
+                property.as_ptr(),
+                value.as_ptr(),
+            )
         })
     }
 
@@ -115,12 +121,20 @@ impl Enumerator {
     }
 
     /// Adds a filter that matches only devices that don't have the the given attribute value.
-    pub fn nomatch_attribute<T: AsRef<OsStr>, U: AsRef<OsStr>>(&mut self, attribute: T, value: U) -> ::Result<()> {
+    pub fn nomatch_attribute<T: AsRef<OsStr>, U: AsRef<OsStr>>(
+        &mut self,
+        attribute: T,
+        value: U,
+    ) -> ::Result<()> {
         let attribute = try!(::util::os_str_to_cstring(attribute));
         let value = try!(::util::os_str_to_cstring(value));
 
         ::util::errno_to_result(unsafe {
-            ::ffi::udev_enumerate_add_nomatch_sysattr(self.enumerator, attribute.as_ptr(), value.as_ptr())
+            ::ffi::udev_enumerate_add_nomatch_sysattr(
+                self.enumerator,
+                attribute.as_ptr(),
+                value.as_ptr(),
+            )
         })
     }
 
@@ -142,17 +156,14 @@ impl Enumerator {
         }));
 
         Ok(Devices {
-            enumerator: self.clone(),
-            entry: unsafe { ::ffi::udev_enumerate_get_list_entry(self.enumerator) }
+            entry: unsafe { ::ffi::udev_enumerate_get_list_entry(self.enumerator) },
         })
     }
 }
 
-
 /// Iterator over devices.
 pub struct Devices {
-    enumerator: Enumerator,
-    entry: *mut ::ffi::udev_list_entry
+    entry: *mut ::ffi::udev_list_entry,
 }
 
 impl Iterator for Devices {
@@ -166,9 +177,9 @@ impl Iterator for Devices {
 
             self.entry = unsafe { ::ffi::udev_list_entry_get_next(self.entry) };
 
-            match self.enumerator.context.device_from_syspath(syspath) {
+            match Device::from_syspath(syspath) {
                 Ok(d) => return Some(d),
-                Err(_) => continue
+                Err(_) => continue,
             };
         }
 
