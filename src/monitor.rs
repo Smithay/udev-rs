@@ -173,6 +173,12 @@ pub enum EventType {
     /// A device was removed.
     Remove,
 
+    /// A device was bind to driver.
+    Bind,
+
+    /// A device was unbind to driver.
+    Unbind,
+
     /// An unknown event occurred.
     Unknown,
 }
@@ -189,6 +195,8 @@ impl fmt::Display for EventType {
             &EventType::Add => "add",
             &EventType::Change => "change",
             &EventType::Remove => "remove",
+            &EventType::Bind => "bind",
+            &EventType::Unbind => "unbind",
             &EventType::Unknown => "unknown",
         })
     }
@@ -220,6 +228,8 @@ impl Event {
             Some("add") => EventType::Add,
             Some("change") => EventType::Change,
             Some("remove") => EventType::Remove,
+            Some("bind") => EventType::Bind,
+            Some("unbind") => EventType::Unbind,
             _ => EventType::Unknown
         }
     }
