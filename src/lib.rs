@@ -7,10 +7,10 @@
 extern crate libc;
 extern crate libudev_sys as ffi;
 
-pub use device::{Attribute, Attributes, Device, DeviceType, Properties, Property};
+pub use device::{Attribute, Attributes, Device, Properties, Property};
 pub use enumerator::{Devices, Enumerator};
-pub use error::{Error, ErrorKind, Result};
-pub use monitor::{Event, EventType, MonitorBuilder, MonitorSocket};
+pub use error::{Error, Kind as ErrorKind, Result};
+pub use monitor::{Builder as MonitorBuilder, Event, EventType, Socket as MonitorSocket};
 
 macro_rules! try_alloc {
     ($exp:expr) => {{

@@ -6,20 +6,20 @@ use std::str;
 use std::error::Error as StdError;
 use std::result::Result as StdResult;
 
-use ::libc::c_int;
+use libc::c_int;
 
 /// A `Result` type for libudev operations.
-pub type Result<T> = StdResult<T,Error>;
+pub type Result<T> = StdResult<T, Error>;
 
 /// Types of errors that occur in libudev.
-#[derive(Debug,Clone,Copy,PartialEq,Eq)]
-pub enum ErrorKind {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Kind {
     /// Allocation failed
     NoMem,
     /// Invalid arguments
     InvalidInput,
     /// I/O Error
-    Io(io::ErrorKind)
+    Io(io::ErrorKind),
 }
 
 /// The error type for libudev operations.
@@ -30,17 +30,15 @@ pub struct Error {
 
 impl Error {
     fn strerror(&self) -> &str {
-        unsafe {
-            str::from_utf8_unchecked(CStr::from_ptr(::libc::strerror(self.errno)).to_bytes())
-        }
+        unsafe { str::from_utf8_unchecked(CStr::from_ptr(libc::strerror(self.errno)).to_bytes()) }
     }
 
-    /// Returns the corresponding `ErrorKind` for this error.
-    pub fn kind(&self) -> ErrorKind {
+    /// Returns the corresponding `Kind` for this error.
+    pub fn kind(&self) -> Kind {
         match self.errno {
-            ::libc::ENOMEM => ErrorKind::NoMem,
-            ::libc::EINVAL => ErrorKind::InvalidInput,
-            errno => ErrorKind::Io(io::Error::from_raw_os_error(errno).kind()),
+            libc::ENOMEM => Kind::NoMem,
+            libc::EINVAL => Kind::InvalidInput,
+            errno => Kind::Io(io::Error::from_raw_os_error(errno).kind()),
         }
     }
 
@@ -51,7 +49,7 @@ impl Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> StdResult<(),fmt::Error> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> StdResult<(), fmt::Error> {
         fmt.write_str(self.strerror())
     }
 }
@@ -63,14 +61,14 @@ impl StdError for Error {
 }
 
 impl From<Error> for io::Error {
-    fn from(error: Error) -> io::Error {
+    fn from(error: Error) -> Self {
         let io_error_kind = match error.kind() {
-            ErrorKind::Io(kind) => kind,
-            ErrorKind::InvalidInput => io::ErrorKind::InvalidInput,
-            ErrorKind::NoMem => io::ErrorKind::Other,
+            Kind::Io(kind) => kind,
+            Kind::InvalidInput => io::ErrorKind::InvalidInput,
+            Kind::NoMem => io::ErrorKind::Other,
         };
 
-        io::Error::new(io_error_kind, error.strerror())
+        Self::new(io_error_kind, error.strerror())
     }
 }
 

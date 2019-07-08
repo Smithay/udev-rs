@@ -36,15 +36,11 @@ extern "C" {
     ) -> c_int;
 }
 
-fn main() {
-    monitor().unwrap();
-}
+fn main() -> io::Result<()> {
+    let mut monitor = udev::MonitorBuilder::new()?;
 
-fn monitor() -> io::Result<()> {
-    let mut monitor = try!(udev::MonitorBuilder::new());
-
-    try!(monitor.match_subsystem_devtype("usb", "usb_device"));
-    let mut socket = try!(monitor.listen());
+    monitor.match_subsystem_devtype("usb", "usb_device")?;
+    let mut socket = monitor.listen()?;
 
     let mut fds = vec![pollfd {
         fd: socket.as_raw_fd(),
