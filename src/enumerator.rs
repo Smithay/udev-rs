@@ -141,7 +141,7 @@ impl Enumerator {
     }
 
     /// Includes the device with the given syspath.
-    pub fn add_syspath(&mut self, syspath: &Path) -> Result<()> {
+    pub fn add_syspath<T: AsRef<OsStr>>(&mut self, syspath: T) -> Result<()> {
         let syspath = util::os_str_to_cstring(syspath)?;
 
         util::errno_to_result(unsafe {
