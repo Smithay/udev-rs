@@ -2,16 +2,11 @@ extern crate udev;
 
 use std::io;
 
-fn main() {
-    let context = udev::Context::new().unwrap();
-    list_devices(&context).unwrap();
-}
+fn main() -> io::Result<()> {
+    let mut enumerator = udev::Enumerator::new()?;
 
-fn list_devices(context: &udev::Context) -> io::Result<()> {
-    let mut enumerator = try!(udev::Enumerator::new(&context));
-
-    for device in try!(enumerator.scan_devices()) {
-        println!("");
+    for device in enumerator.scan_devices()? {
+        println!();
         println!("initialized: {:?}", device.is_initialized());
         println!("     devnum: {:?}", device.devnum());
         println!("    syspath: {:?}", device.syspath());
@@ -25,8 +20,7 @@ fn list_devices(context: &udev::Context) -> io::Result<()> {
 
         if let Some(parent) = device.parent() {
             println!("     parent: {:?}", parent.syspath());
-        }
-        else {
+        } else {
             println!("     parent: None");
         }
 

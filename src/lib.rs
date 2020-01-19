@@ -4,14 +4,13 @@
 
 #![warn(missing_docs)]
 
-extern crate libudev_sys as ffi;
 extern crate libc;
+extern crate libudev_sys as ffi;
 
-pub use context::Context;
-pub use device::{Device, DeviceType, Properties, Property, Attributes, Attribute};
-pub use enumerator::{Enumerator, Devices};
-pub use error::{Result, Error, ErrorKind};
-pub use monitor::{MonitorBuilder, MonitorSocket, EventType, Event};
+pub use device::{Attribute, Attributes, Device, Properties, Property};
+pub use enumerator::{Devices, Enumerator};
+pub use error::{Error, Kind as ErrorKind, Result};
+pub use monitor::{Builder as MonitorBuilder, Event, EventType, Socket as MonitorSocket};
 
 macro_rules! try_alloc {
     ($exp:expr) => {{
@@ -22,7 +21,7 @@ macro_rules! try_alloc {
         }
 
         ptr
-    }}
+    }};
 }
 
 /// Receive the underlying raw pointer
@@ -51,21 +50,6 @@ pub trait FromRaw<T: 'static> {
 }
 
 /// Convert from a raw pointer and the matching context
-pub trait FromRawWithContext<T: 'static> {
-    /// Create an object from a given raw pointer and the matching context.
-    ///
-    /// The reference count will not be increased, be sure not to free this pointer.
-    ///
-    /// ## Unsafety
-    ///
-    /// The pointer has to be a valid reference to the expected underlying udev-struct or undefined
-    /// behaviour might occur.
-    ///
-    /// If the context does not match the context that was used to create the given pointer
-    /// undefined behaviour including use-after-free segfaults might occur.
-    unsafe fn from_raw(context: &Context, ptr: *mut T) -> Self;
-}
-
 macro_rules! as_ffi {
     ($struct_:ident, $field:ident, $type_:ty) => {
         impl $crate::AsRaw<$type_> for $struct_ {
@@ -77,10 +61,15 @@ macro_rules! as_ffi {
                 self.$field
             }
         }
-    }
+
+        impl $crate::FromRaw<$type_> for $struct_ {
+            unsafe fn from_raw(t: *mut $type_) -> Self {
+                Self { $field: t }
+            }
+        }
+    };
 }
 
-mod context;
 mod device;
 mod enumerator;
 mod error;

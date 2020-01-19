@@ -1,5 +1,5 @@
-extern crate udev;
 extern crate libc;
+extern crate udev;
 
 use std::io;
 use std::ptr;
@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use std::os::unix::io::AsRawFd;
 
-use libc::{c_void,c_int,c_short,c_ulong};
+use libc::{c_int, c_short, c_ulong, c_void};
 
 #[repr(C)]
 struct pollfd {
@@ -19,7 +19,7 @@ struct pollfd {
 
 #[repr(C)]
 struct sigset_t {
-    __private: c_void
+    __private: c_void,
 }
 
 #[allow(non_camel_case_types)]
@@ -28,24 +28,35 @@ type nfds_t = c_ulong;
 const POLLIN: c_short = 0x0001;
 
 extern "C" {
-    fn ppoll(fds: *mut pollfd, nfds: nfds_t, timeout_ts: *mut libc::timespec, sigmask: *const sigset_t) -> c_int;
+    fn ppoll(
+        fds: *mut pollfd,
+        nfds: nfds_t,
+        timeout_ts: *mut libc::timespec,
+        sigmask: *const sigset_t,
+    ) -> c_int;
 }
 
-fn main() {
-    let context = udev::Context::new().unwrap();
-    monitor(&context).unwrap();
-}
+fn main() -> io::Result<()> {
+    let mut monitor = udev::MonitorBuilder::new()?;
 
-fn monitor(context: &udev::Context) -> io::Result<()> {
-    let mut monitor = try!(udev::MonitorBuilder::new(&context));
+    monitor.match_subsystem_devtype("usb", "usb_device")?;
+    let mut socket = monitor.listen()?;
 
-    try!(monitor.match_subsystem_devtype("usb", "usb_device"));
-    let mut socket = try!(monitor.listen());
-
-    let mut fds = vec!(pollfd { fd: socket.as_raw_fd(), events: POLLIN, revents: 0 });
+    let mut fds = vec![pollfd {
+        fd: socket.as_raw_fd(),
+        events: POLLIN,
+        revents: 0,
+    }];
 
     loop {
-        let result = unsafe { ppoll((&mut fds[..]).as_mut_ptr(), fds.len() as nfds_t, ptr::null_mut(), ptr::null()) };
+        let result = unsafe {
+            ppoll(
+                (&mut fds[..]).as_mut_ptr(),
+                fds.len() as nfds_t,
+                ptr::null_mut(),
+                ptr::null(),
+            )
+        };
 
         if result < 0 {
             return Err(io::Error::last_os_error());
@@ -59,12 +70,16 @@ fn monitor(context: &udev::Context) -> io::Result<()> {
             }
         };
 
-        println!("{}: {} {} (subsystem={}, sysname={}, devtype={})",
-                 event.sequence_number(),
-                 event.event_type(),
-                 event.syspath().to_str().unwrap_or("---"),
-                 event.subsystem().map_or("", |s| { s.to_str().unwrap_or("") }),
-                 event.sysname().to_str().unwrap_or(""),
-                 event.devtype().map_or("", |s| { s.to_str().unwrap_or("") }));
+        println!(
+            "{}: {} {} (subsystem={}, sysname={}, devtype={})",
+            event.sequence_number(),
+            event.event_type(),
+            event.syspath().to_str().unwrap_or("---"),
+            event
+                .subsystem()
+                .map_or("", |s| { s.to_str().unwrap_or("") }),
+            event.sysname().to_str().unwrap_or(""),
+            event.devtype().map_or("", |s| { s.to_str().unwrap_or("") })
+        );
     }
 }
