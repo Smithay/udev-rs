@@ -107,7 +107,7 @@ impl Device {
     }
 
     /// Returns the parent of the device with the matching subsystem and devtype if any.
-    pub fn parent_with_subsystem(&self, subsystem: &Path) -> Result<Option<Self>> {
+    pub fn parent_with_subsystem<T: AsRef<OsStr>>(&self, subsystem: T) -> Result<Option<Self>> {
         let subsystem = util::os_str_to_cstring(subsystem)?;
         let ptr = unsafe {
             ffi::udev_device_get_parent_with_subsystem_devtype(
@@ -125,10 +125,10 @@ impl Device {
     }
 
     /// Returns the parent of the device with the matching subsystem and devtype if any.
-    pub fn parent_with_subsystem_devtype(
+    pub fn parent_with_subsystem_devtype<T: AsRef<OsStr>, U: AsRef<OsStr>>(
         &self,
-        subsystem: &Path,
-        devtype: &Path,
+        subsystem: T,
+        devtype: U
     ) -> Result<Option<Self>> {
         let subsystem = util::os_str_to_cstring(subsystem)?;
         let devtype = util::os_str_to_cstring(devtype)?;
