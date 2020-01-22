@@ -39,7 +39,7 @@ impl Builder {
     }
 
     /// Adds a filter that matches events for devices with the given subsystem.
-    pub fn match_subsystem<T: AsRef<OsStr>>(&mut self, subsystem: T) -> Result<()> {
+    pub fn match_subsystem<T: AsRef<OsStr>>(self, subsystem: T) -> Result<Self> {
         let subsystem = util::os_str_to_cstring(subsystem)?;
 
         util::errno_to_result(unsafe {
@@ -49,14 +49,15 @@ impl Builder {
                 ptr::null(),
             )
         })
+        .and(Ok(self))
     }
 
     /// Adds a filter that matches events for devices with the given subsystem and device type.
     pub fn match_subsystem_devtype<T: AsRef<OsStr>, U: AsRef<OsStr>>(
-        &mut self,
+        self,
         subsystem: T,
         devtype: U,
-    ) -> Result<()> {
+    ) -> Result<Self> {
         let subsystem = util::os_str_to_cstring(subsystem)?;
         let devtype = util::os_str_to_cstring(devtype)?;
 
@@ -67,20 +68,23 @@ impl Builder {
                 devtype.as_ptr(),
             )
         })
+        .and(Ok(self))
     }
 
     /// Adds a filter that matches events for devices with the given tag.
-    pub fn match_tag<T: AsRef<OsStr>>(&mut self, tag: T) -> Result<()> {
+    pub fn match_tag<T: AsRef<OsStr>>(self, tag: T) -> Result<Self> {
         let tag = util::os_str_to_cstring(tag)?;
 
         util::errno_to_result(unsafe {
             ffi::udev_monitor_filter_add_match_tag(self.monitor, tag.as_ptr())
         })
+        .and(Ok(self))
     }
 
     /// Removes all filters currently set on the monitor.
-    pub fn clear_filters(&mut self) -> Result<()> {
+    pub fn clear_filters(self) -> Result<Self> {
         util::errno_to_result(unsafe { ffi::udev_monitor_filter_remove(self.monitor) })
+            .and(Ok(self))
     }
 
     /// Listens for events matching the current filters.
