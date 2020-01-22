@@ -9,7 +9,6 @@ extern crate libudev_sys as ffi;
 
 pub use device::{Attribute, Attributes, Device, Properties, Property};
 pub use enumerator::{Devices, Enumerator};
-pub use error::{Error, Kind as ErrorKind, Result};
 pub use monitor::{Builder as MonitorBuilder, Event, EventType, Socket as MonitorSocket};
 
 macro_rules! try_alloc {
@@ -17,7 +16,7 @@ macro_rules! try_alloc {
         let ptr = $exp;
 
         if ptr.is_null() {
-            return Err(::error::from_errno(::libc::ENOMEM));
+            return Err(std::io::Error::last_os_error());
         }
 
         ptr
@@ -72,6 +71,5 @@ macro_rules! as_ffi {
 
 mod device;
 mod enumerator;
-mod error;
 mod monitor;
 mod util;

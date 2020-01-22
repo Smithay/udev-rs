@@ -2,12 +2,13 @@ use std::fmt;
 use std::ptr;
 
 use std::ffi::OsStr;
+use std::io::Result;
 use std::ops::Deref;
 use std::os::unix::io::{AsRawFd, RawFd};
 
 use {ffi, util};
 
-use {AsRaw, Device, FromRaw, Result};
+use {AsRaw, Device, FromRaw};
 
 /// Monitors for device events.
 ///

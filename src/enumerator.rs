@@ -1,10 +1,11 @@
 use std::ffi::OsStr;
+use std::io::Result;
 use std::path::Path;
 use std::ptr;
 
 use {ffi, util};
 
-use {AsRaw, Device, FromRaw, Result};
+use {AsRaw, Device, FromRaw};
 
 /// An enumeration context.
 ///

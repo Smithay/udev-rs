@@ -1,6 +1,7 @@
 use std::str;
 
 use std::ffi::{CStr, OsStr};
+use std::io::Result;
 use std::path::Path;
 use std::ptr;
 use std::str::FromStr;
@@ -9,7 +10,7 @@ use libc::{c_char, dev_t};
 
 use {ffi, util};
 
-use {FromRaw, Result};
+use FromRaw;
 
 /// A structure that provides access to sysfs/kernel devices.
 pub struct Device {
