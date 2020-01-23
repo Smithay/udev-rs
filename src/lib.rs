@@ -6,6 +6,8 @@
 
 extern crate libc;
 extern crate libudev_sys as ffi;
+#[cfg(feature = "mio")]
+extern crate mio;
 
 pub use device::{Attribute, Attributes, Device, Properties, Property};
 pub use enumerator::{Devices, Enumerator};
