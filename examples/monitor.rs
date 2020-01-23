@@ -37,10 +37,9 @@ extern "C" {
 }
 
 fn main() -> io::Result<()> {
-    let mut monitor = udev::MonitorBuilder::new()?;
-
-    monitor.match_subsystem_devtype("usb", "usb_device")?;
-    let mut socket = monitor.listen()?;
+    let mut socket = udev::MonitorBuilder::new()?
+        .match_subsystem_devtype("usb", "usb_device")?
+        .listen()?;
 
     let mut fds = vec![pollfd {
         fd: socket.as_raw_fd(),
