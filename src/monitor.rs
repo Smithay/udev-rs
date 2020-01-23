@@ -5,6 +5,9 @@ use std::ffi::OsStr;
 use std::ops::Deref;
 use std::os::unix::io::{AsRawFd, RawFd};
 
+#[cfg(feature = "mio")]
+use mio::{event::Evented, unix::EventedFd, Poll, PollOpt, Ready, Token};
+
 use {ffi, util};
 
 use {AsRaw, Device, FromRaw, Result};
@@ -227,5 +230,32 @@ impl Event {
     /// Returns the device associated with this event.
     pub fn device(&self) -> Device {
         self.device.clone()
+    }
+}
+
+#[cfg(feature = "mio")]
+impl Evented for Socket {
+    fn register(
+        &self,
+        poll: &Poll,
+        token: Token,
+        interest: Ready,
+        opts: PollOpt,
+    ) -> std::io::Result<()> {
+        EventedFd(&self.as_raw_fd()).register(poll, token, interest, opts)
+    }
+
+    fn reregister(
+        &self,
+        poll: &Poll,
+        token: Token,
+        interest: Ready,
+        opts: PollOpt,
+    ) -> std::io::Result<()> {
+        EventedFd(&self.as_raw_fd()).reregister(poll, token, interest, opts)
+    }
+
+    fn deregister(&self, poll: &Poll) -> std::io::Result<()> {
+        EventedFd(&self.as_raw_fd()).deregister(poll)
     }
 }
