@@ -1,7 +1,6 @@
 use std::ffi::OsStr;
 use std::io::Result;
 use std::path::Path;
-use std::ptr;
 
 use {ffi, util};
 
@@ -33,7 +32,9 @@ as_ffi!(Enumerator, enumerator, ffi::udev_enumerate);
 impl Enumerator {
     /// Creates a new Enumerator.
     pub fn new() -> Result<Self> {
-        let ptr = try_alloc!(unsafe { ffi::udev_enumerate_new(ptr::null_mut()) });
+        // Hack. We use this because old version libudev check udev arg by null ptr and return error
+        // if udev eq nullptr. In current version first argument unused
+        let ptr = try_alloc!(unsafe { ffi::udev_enumerate_new([].as_mut_ptr() as *mut ffi::udev) });
         Ok(unsafe { Self::from_raw(ptr) })
     }
 
@@ -189,5 +190,15 @@ impl Iterator for Devices {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         (0, None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_enumerator() {
+        Enumerator::new().unwrap();
     }
 }
