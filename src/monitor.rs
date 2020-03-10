@@ -35,7 +35,7 @@ as_ffi!(Builder, monitor, ffi::udev_monitor);
 impl Builder {
     /// Creates a new `Monitor`.
     pub fn new() -> Result<Self> {
-        let name = b"udev\0".as_ptr() as *const i8;
+        let name = b"udev\0".as_ptr() as *const libc::c_char;
 
         let ptr = try_alloc!(unsafe { ffi::udev_monitor_new_from_netlink(ptr::null_mut(), name) });
 
