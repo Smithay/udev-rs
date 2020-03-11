@@ -41,8 +41,10 @@ impl Device {
     pub fn from_syspath(syspath: &Path) -> Result<Self> {
         let syspath = util::os_str_to_cstring(syspath)?;
 
+        // Hack. We use this because old version libudev check udev arg by null ptr and return error
+        // if udev eq nullptr. In current version first argument unused
         let ptr = try_alloc!(unsafe {
-            ffi::udev_device_new_from_syspath(ptr::null_mut(), syspath.as_ptr())
+            ffi::udev_device_new_from_syspath([].as_mut_ptr() as *mut ffi::udev, syspath.as_ptr())
         });
 
         Ok(unsafe { Self::from_raw(ptr) })

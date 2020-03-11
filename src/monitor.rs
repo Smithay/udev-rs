@@ -37,7 +37,11 @@ impl Builder {
     pub fn new() -> Result<Self> {
         let name = b"udev\0".as_ptr() as *const i8;
 
-        let ptr = try_alloc!(unsafe { ffi::udev_monitor_new_from_netlink(ptr::null_mut(), name) });
+        // Hack. We use this because old version libudev check udev arg by null ptr and return error
+        // if udev eq nullptr. In current version first argument unused
+        let ptr = try_alloc!(unsafe {
+            ffi::udev_monitor_new_from_netlink([].as_mut_ptr() as *mut ffi::udev, name)
+        });
 
         Ok(unsafe { Self::from_raw(ptr) })
     }
