@@ -159,6 +159,7 @@ impl Enumerator {
 
         Ok(Devices {
             entry: unsafe { ffi::udev_enumerate_get_list_entry(self.enumerator) },
+            enumerator: unsafe { ffi::udev_enumerate_ref(self.enumerator) }
         })
     }
 }
@@ -166,6 +167,13 @@ impl Enumerator {
 /// Iterator over devices.
 pub struct Devices {
     entry: *mut ffi::udev_list_entry,
+    enumerator: *mut ffi::udev_enumerate,
+}
+
+impl Drop for Devices {
+    fn drop(&mut self) {
+        unsafe { ffi::udev_enumerate_unref(self.enumerator) };
+    }
 }
 
 impl Iterator for Devices {
@@ -200,5 +208,20 @@ mod tests {
     #[test]
     fn create_enumerator() {
         Enumerator::new().unwrap();
+    }
+
+    #[test]
+    fn test_enumeration() {
+        fn find_hidraws() -> Devices {
+            let mut en = Enumerator::new().unwrap();
+            en.match_is_initialized().unwrap();
+            en.match_subsystem("hidraw").unwrap();
+            en.scan_devices().unwrap()
+        }
+
+        for dev in find_hidraws() {
+            println!("Found a hidraw at {:?}", dev.devnode());
+        }
+
     }
 }
