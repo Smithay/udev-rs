@@ -35,7 +35,7 @@ as_ffi!(Builder, monitor, ffi::udev_monitor);
 impl Builder {
     /// Creates a new `Monitor`.
     pub fn new() -> Result<Self> {
-        let name = b"udev\0".as_ptr() as *const i8;
+        let name = b"udev\0".as_ptr() as *const libc::c_char;
 
         // Hack. We use this because old version libudev check udev arg by null ptr and return error
         // if udev eq nullptr. In current version first argument unused
