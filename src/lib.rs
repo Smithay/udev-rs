@@ -5,7 +5,7 @@
 #![warn(missing_docs)]
 
 extern crate libc;
-extern crate libudev_sys as ffi;
+pub extern crate libudev_sys as ffi;
 #[cfg(feature = "mio")]
 extern crate mio;
 
