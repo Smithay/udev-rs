@@ -1,6 +1,6 @@
 [package]
 name = "udev"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>", "Victor Brekenfeld <github@drakulix.de>"]
 description = "libudev bindings for Rust"
 license = "MIT"
@@ -11,6 +11,6 @@ keywords = ["udev", "hardware", "bindings", "sysfs"]
 readme = "README.md"
 
 [dependencies]
-libudev-sys = "0.1.3"
+libudev-sys = "0.1.4"
 libc = "0.2"
 mio = { version = "0.6", optional = true }
