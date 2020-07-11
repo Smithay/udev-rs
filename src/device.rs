@@ -402,12 +402,12 @@ pub struct Attribute<'a> {
 
 impl<'a> Attribute<'a> {
     /// Returns the attribute name.
-    pub fn name(&self) -> &OsStr {
+    pub fn name(&self) -> &'a OsStr {
         self.name
     }
 
     /// Returns the attribute value.
-    pub fn value(&self) -> Option<&OsStr> {
+    pub fn value(&self) -> Option<&'a OsStr> {
         self.device.attribute_value(self.name)
     }
 }
