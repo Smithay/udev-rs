@@ -2,9 +2,10 @@ use std::ffi::OsStr;
 use std::io::Result;
 use std::path::Path;
 
+use Udev;
 use {ffi, util};
 
-use {AsRaw, Device, FromRaw};
+use {AsRaw, Device};
 
 /// An enumeration context.
 ///
@@ -12,12 +13,16 @@ use {AsRaw, Device, FromRaw};
 /// by calling its `match_*` and `nomatch_*` methods. After the filters are setup, the
 /// `scan_devices()` method finds devices in `/sys` that match the filters.
 pub struct Enumerator {
+    udev: Udev,
     enumerator: *mut ffi::udev_enumerate,
 }
 
 impl Clone for Enumerator {
     fn clone(&self) -> Self {
-        unsafe { Self::from_raw(ffi::udev_enumerate_ref(self.enumerator)) }
+        Self {
+            udev: self.udev.clone(),
+            enumerator: unsafe { ffi::udev_enumerate_ref(self.enumerator) },
+        }
     }
 }
 
@@ -27,15 +32,24 @@ impl Drop for Enumerator {
     }
 }
 
-as_ffi!(Enumerator, enumerator, ffi::udev_enumerate);
+as_raw!(Enumerator, enumerator, ffi::udev_enumerate);
 
 impl Enumerator {
     /// Creates a new Enumerator.
     pub fn new() -> Result<Self> {
-        // Hack. We use this because old version libudev check udev arg by null ptr and return error
-        // if udev eq nullptr. In current version first argument unused
-        let ptr = try_alloc!(unsafe { ffi::udev_enumerate_new([].as_mut_ptr() as *mut ffi::udev) });
-        Ok(unsafe { Self::from_raw(ptr) })
+        // Create a new Udev context for this enumeration
+        // It would be more efficient to allow callers to create just one context and use multiple
+        // enumerators, however that would be an API-breaking change.  Since the use of Udev
+        // context objects isn't even enforced in more recent versions of libudev, the overhead
+        // associated with creating one for each enumeration is presumably low, and not worth the
+        // additional complexity of a breaking API change.
+        let udev = Udev::new()?;
+
+        let ptr = try_alloc!(unsafe { ffi::udev_enumerate_new(udev.as_raw()) });
+        Ok(Self {
+            udev,
+            enumerator: ptr,
+        })
     }
 
     /// Adds a filter that matches only initialized devices.
@@ -159,7 +173,7 @@ impl Enumerator {
 
         Ok(Devices {
             entry: unsafe { ffi::udev_enumerate_get_list_entry(self.enumerator) },
-            enumerator: unsafe { ffi::udev_enumerate_ref(self.enumerator) }
+            enumerator: self.clone(),
         })
     }
 }
@@ -167,13 +181,10 @@ impl Enumerator {
 /// Iterator over devices.
 pub struct Devices {
     entry: *mut ffi::udev_list_entry,
-    enumerator: *mut ffi::udev_enumerate,
-}
 
-impl Drop for Devices {
-    fn drop(&mut self) {
-        unsafe { ffi::udev_enumerate_unref(self.enumerator) };
-    }
+    /// `Devices` must hold a clone of `Enumerator` to ensure the `udev_enumerate` struct (and the
+    /// `udev` struct which it depends on) remain allocated for the life of the `Devices` instance
+    enumerator: Enumerator,
 }
 
 impl Iterator for Devices {
@@ -187,7 +198,8 @@ impl Iterator for Devices {
 
             self.entry = unsafe { ffi::udev_list_entry_get_next(self.entry) };
 
-            match Device::from_syspath(syspath) {
+            println!("{}", syspath.display());
+            match Device::from_syspath_internal(self.enumerator.udev.clone(), syspath) {
                 Ok(d) => return Some(d),
                 Err(_) => continue,
             };
@@ -222,6 +234,20 @@ mod tests {
         for dev in find_hidraws() {
             println!("Found a hidraw at {:?}", dev.devnode());
         }
+    }
 
+    // The above test which limits devices to `hidraw` did not reproduce the crash on libudev 215
+    // caused by the use of a bogus udev context.  Clearly it's important to test all enumeration
+    // pathways.
+    //
+    // This test is intended to reproduce https://github.com/Smithay/udev-rs/issues/18 when run on
+    // a system like Debian 8 "jessie" which runs an older libudev
+    #[test]
+    fn test_enumerate_all() {
+        let mut en = Enumerator::new().unwrap();
+
+        for dev in en.scan_devices().unwrap() {
+            println!("Found a device at {:?}", dev.devnode());
+        }
     }
 }
