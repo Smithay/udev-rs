@@ -9,9 +9,10 @@ use std::os::unix::io::{AsRawFd, RawFd};
 #[cfg(feature = "mio")]
 use mio::{event::Evented, unix::EventedFd, Poll, PollOpt, Ready, Token};
 
+use Udev;
 use {ffi, util};
 
-use {AsRaw, Device, FromRaw};
+use {AsRaw, Device};
 
 /// Monitors for device events.
 ///
@@ -19,7 +20,17 @@ use {AsRaw, Device, FromRaw};
 /// in the kernel, and only events that match the filters are received by the socket. Filters must
 /// be setup before listening for events.
 pub struct Builder {
+    udev: Udev,
     monitor: *mut ffi::udev_monitor,
+}
+
+impl Clone for Builder {
+    fn clone(&self) -> Self {
+        Self {
+            udev: self.udev.clone(),
+            monitor: unsafe { ffi::udev_monitor_ref(self.monitor) },
+        }
+    }
 }
 
 impl Drop for Builder {
@@ -30,20 +41,24 @@ impl Drop for Builder {
     }
 }
 
-as_ffi!(Builder, monitor, ffi::udev_monitor);
+as_raw!(Builder, monitor, ffi::udev_monitor);
 
 impl Builder {
     /// Creates a new `Monitor`.
     pub fn new() -> Result<Self> {
+        // Create a new Udev context for this monitor
+        // It would be more efficient to allow callers to create just one context and use multiple
+        // monitors, however that would be an API-breaking change.
+        Self::with_udev(Udev::new()?)
+    }
+
+    /// Creates a new `Monitor` using an existing `Udev` instance
+    pub(crate) fn with_udev(udev: Udev) -> Result<Self> {
         let name = b"udev\0".as_ptr() as *const libc::c_char;
 
-        // Hack. We use this because old version libudev check udev arg by null ptr and return error
-        // if udev eq nullptr. In current version first argument unused
-        let ptr = try_alloc!(unsafe {
-            ffi::udev_monitor_new_from_netlink([].as_mut_ptr() as *mut ffi::udev, name)
-        });
+        let ptr = try_alloc!(unsafe { ffi::udev_monitor_new_from_netlink(udev.as_raw(), name) });
 
-        Ok(unsafe { Self::from_raw(ptr) })
+        Ok(Self { udev, monitor: ptr })
     }
 
     /// Adds a filter that matches events for devices with the given subsystem.
@@ -113,16 +128,9 @@ impl Builder {
 /// Monitors are initially setup to receive events from the kernel via a nonblocking socket. A
 /// variant of `poll()` should be used on the file descriptor returned by the `AsRawFd` trait to
 /// wait for new events.
+#[derive(Clone)]
 pub struct Socket {
     inner: Builder,
-}
-
-impl Clone for Socket {
-    fn clone(&self) -> Self {
-        Self {
-            inner: unsafe { Builder::from_raw(ffi::udev_monitor_ref(self.inner.monitor)) },
-        }
-    }
 }
 
 impl AsRaw<ffi::udev_monitor> for Socket {
@@ -152,7 +160,7 @@ impl Iterator for Socket {
         if ptr.is_null() {
             None
         } else {
-            let device = unsafe { Device::from_raw(ptr) };
+            let device = Device::from_raw(self.inner.udev.clone(), ptr);
             Some(Event { device })
         }
     }

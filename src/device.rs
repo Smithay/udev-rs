@@ -8,18 +8,23 @@ use std::str::FromStr;
 
 use libc::{c_char, dev_t};
 
+use Udev;
 use {ffi, util};
 
-use FromRaw;
+use AsRaw;
 
 /// A structure that provides access to sysfs/kernel devices.
 pub struct Device {
+    udev: Udev,
     device: *mut ffi::udev_device,
 }
 
 impl Clone for Device {
     fn clone(&self) -> Self {
-        unsafe { Self::from_raw(ffi::udev_device_ref(self.device)) }
+        Self {
+            udev: self.udev.clone(),
+            device: unsafe { ffi::udev_device_ref(self.device) },
+        }
     }
 }
 
@@ -31,7 +36,7 @@ impl Drop for Device {
     }
 }
 
-as_ffi!(Device, device, ffi::udev_device);
+as_raw!(Device, device, ffi::udev_device);
 
 impl Device {
     /// Creates a device for a given syspath.
@@ -39,15 +44,37 @@ impl Device {
     /// The `syspath` parameter should be a path to the device file within the `sysfs` file system,
     /// e.g., `/sys/devices/virtual/tty/tty0`.
     pub fn from_syspath(syspath: &Path) -> Result<Self> {
+        // Create a new Udev context for this device
+        // It would be more efficient to allow callers to create just one context and use multiple
+        // devices, however that would be an API-breaking change.
+        //
+        // When devices are enumerated using an `Enumerator`, it will use `from_syspath_internal`
+        // which can reuse the existing `Udev` context to avoid this extra overhead.
+        let udev = Udev::new()?;
+
+        Self::from_syspath_internal(udev, syspath)
+    }
+
+    /// Creates a device for a given syspath, re-using an existing `Udev` context
+    ///
+    /// The `syspath` parameter should be a path to the device file within the `sysfs` file system,
+    /// e.g., `/sys/devices/virtual/tty/tty0`.
+    pub(crate) fn from_syspath_internal(udev: Udev, syspath: &Path) -> Result<Self> {
         let syspath = util::os_str_to_cstring(syspath)?;
 
-        // Hack. We use this because old version libudev check udev arg by null ptr and return error
-        // if udev eq nullptr. In current version first argument unused
         let ptr = try_alloc!(unsafe {
-            ffi::udev_device_new_from_syspath([].as_mut_ptr() as *mut ffi::udev, syspath.as_ptr())
+            ffi::udev_device_new_from_syspath(udev.as_raw(), syspath.as_ptr())
         });
 
-        Ok(unsafe { Self::from_raw(ptr) })
+        Ok(Self::from_raw(udev, ptr))
+    }
+
+    /// Creates a rust `Device` given an already created libudev `ffi::udev_device*` and a
+    /// corresponding `Udev` instance from which the device was created.
+    ///
+    /// This guarantees that the `Udev` will live longer than the corresponding `Device`
+    pub(crate) fn from_raw(udev: Udev, ptr: *mut ffi::udev_device) -> Self {
+        Self { udev, device: ptr }
     }
 
     /// Checks whether the device has already been handled by udev.
@@ -106,7 +133,9 @@ impl Device {
             return None;
         }
 
-        Some(unsafe { Self::from_raw(ffi::udev_device_ref(ptr)) })
+        Some(Self::from_raw(self.udev.clone(), unsafe {
+            ffi::udev_device_ref(ptr)
+        }))
     }
 
     /// Returns the parent of the device with the matching subsystem and devtype if any.
@@ -124,14 +153,16 @@ impl Device {
             return Ok(None);
         }
 
-        Ok(Some(unsafe { Self::from_raw(ffi::udev_device_ref(ptr)) }))
+        Ok(Some(Self::from_raw(self.udev.clone(), unsafe {
+            ffi::udev_device_ref(ptr)
+        })))
     }
 
     /// Returns the parent of the device with the matching subsystem and devtype if any.
     pub fn parent_with_subsystem_devtype<T: AsRef<OsStr>, U: AsRef<OsStr>>(
         &self,
         subsystem: T,
-        devtype: U
+        devtype: U,
     ) -> Result<Option<Self>> {
         let subsystem = util::os_str_to_cstring(subsystem)?;
         let devtype = util::os_str_to_cstring(devtype)?;
@@ -147,7 +178,9 @@ impl Device {
             return Ok(None);
         }
 
-        Ok(Some(unsafe { Self::from_raw(ffi::udev_device_ref(ptr)) }))
+        Ok(Some(Self::from_raw(self.udev.clone(), unsafe {
+            ffi::udev_device_ref(ptr)
+        })))
     }
 
     /// Returns the subsystem name of the device.

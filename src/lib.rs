@@ -12,6 +12,7 @@ extern crate mio;
 pub use device::{Attribute, Attributes, Device, Properties, Property};
 pub use enumerator::{Devices, Enumerator};
 pub use monitor::{Builder as MonitorBuilder, Event, EventType, Socket as MonitorSocket};
+pub(crate) use udev::Udev;
 
 macro_rules! try_alloc {
     ($exp:expr) => {{
@@ -53,6 +54,13 @@ pub trait FromRaw<T: 'static> {
 /// Convert from a raw pointer and the matching context
 macro_rules! as_ffi {
     ($struct_:ident, $field:ident, $type_:ty) => {
+        as_raw!($struct_, $field, $type_);
+        from_raw!($struct_, $field, $type_);
+    };
+}
+
+macro_rules! as_raw {
+    ($struct_:ident, $field:ident, $type_:ty) => {
         impl $crate::AsRaw<$type_> for $struct_ {
             fn as_raw(&self) -> *mut $type_ {
                 self.$field
@@ -62,7 +70,11 @@ macro_rules! as_ffi {
                 self.$field
             }
         }
+    };
+}
 
+macro_rules! from_raw {
+    ($struct_:ident, $field:ident, $type_:ty) => {
         impl $crate::FromRaw<$type_> for $struct_ {
             unsafe fn from_raw(t: *mut $type_) -> Self {
                 Self { $field: t }
@@ -74,4 +86,5 @@ macro_rules! as_ffi {
 mod device;
 mod enumerator;
 mod monitor;
+mod udev;
 mod util;
