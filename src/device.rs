@@ -11,7 +11,7 @@ use libc::{c_char, dev_t};
 use Udev;
 use {ffi, util};
 
-use AsRaw;
+use {AsRaw, FromRaw};
 
 /// A structure that provides access to sysfs/kernel devices.
 pub struct Device {
@@ -36,7 +36,7 @@ impl Drop for Device {
     }
 }
 
-as_raw!(Device, device, ffi::udev_device);
+as_ffi_with_context!(Device, device, ffi::udev_device, ffi::udev_device_ref);
 
 impl Device {
     /// Creates a device for a given syspath.
@@ -48,18 +48,20 @@ impl Device {
         // It would be more efficient to allow callers to create just one context and use multiple
         // devices, however that would be an API-breaking change.
         //
-        // When devices are enumerated using an `Enumerator`, it will use `from_syspath_internal`
-        // which can reuse the existing `Udev` context to avoid this extra overhead.
+        // When devices are enumerated using an `Enumerator`, it will use
+        // `from_syspath_with_context` which can reuse the existing `Udev` context to avoid this
+        // extra overhead.
         let udev = Udev::new()?;
 
-        Self::from_syspath_internal(udev, syspath)
+        Self::from_syspath_with_context(udev, syspath)
     }
 
-    /// Creates a device for a given syspath, re-using an existing `Udev` context
+    /// Creates a device for a given syspath, using an existing `Udev` instance rather than
+    /// creating one automatically.
     ///
     /// The `syspath` parameter should be a path to the device file within the `sysfs` file system,
     /// e.g., `/sys/devices/virtual/tty/tty0`.
-    pub(crate) fn from_syspath_internal(udev: Udev, syspath: &Path) -> Result<Self> {
+    pub fn from_syspath_with_context(udev: Udev, syspath: &Path) -> Result<Self> {
         let syspath = util::os_str_to_cstring(syspath)?;
 
         let ptr = try_alloc!(unsafe {
