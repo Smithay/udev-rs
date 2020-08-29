@@ -5,7 +5,7 @@ use std::path::Path;
 use Udev;
 use {ffi, util};
 
-use {AsRaw, Device};
+use {AsRaw, AsRawWithContext, Device, FromRaw};
 
 /// An enumeration context.
 ///
@@ -32,7 +32,12 @@ impl Drop for Enumerator {
     }
 }
 
-as_raw!(Enumerator, enumerator, ffi::udev_enumerate);
+as_ffi_with_context!(
+    Enumerator,
+    enumerator,
+    ffi::udev_enumerate,
+    ffi::udev_enumerate_ref
+);
 
 impl Enumerator {
     /// Creates a new Enumerator.
@@ -198,8 +203,7 @@ impl Iterator for Devices {
 
             self.entry = unsafe { ffi::udev_list_entry_get_next(self.entry) };
 
-            println!("{}", syspath.display());
-            match Device::from_syspath_internal(self.enumerator.udev.clone(), syspath) {
+            match Device::from_syspath_with_context(self.enumerator.udev.clone(), syspath) {
                 Ok(d) => return Some(d),
                 Err(_) => continue,
             };
@@ -216,10 +220,24 @@ impl Iterator for Devices {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{AsRawWithContext, FromRawWithContext};
 
     #[test]
     fn create_enumerator() {
         Enumerator::new().unwrap();
+    }
+
+    #[test]
+    fn round_trip_to_raw_pointers() {
+        let enumerator = Enumerator::new().unwrap();
+
+        // Round-trip this to raw pointers and back again
+        let (udev, ptr) = enumerator.into_raw_with_context();
+
+        let mut enumerator = unsafe { Enumerator::from_raw_with_context(udev, ptr) };
+
+        // Everything should still work just the same after round-tripping
+        let _ = enumerator.scan_devices().unwrap().collect::<Vec<_>>();
     }
 
     #[test]

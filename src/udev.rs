@@ -15,7 +15,7 @@ use FromRaw;
 /// `udev` is a ref-counted struct, with references added and removed with `udev_ref` and
 /// `udef_unref` respectively.  This Rust wrapper takes advantage of that ref counting to implement
 /// `Clone` and `Drop`, so callers need not worry about any C-specific resource management.
-pub(crate) struct Udev {
+pub struct Udev {
     udev: *mut ffi::udev,
 }
 
@@ -31,7 +31,7 @@ impl Drop for Udev {
     }
 }
 
-as_ffi!(Udev, udev, ffi::udev);
+as_ffi!(Udev, udev, ffi::udev, ffi::udev_ref);
 
 impl Udev {
     /// Creates a new Udev context.
@@ -60,5 +60,17 @@ mod tests {
             // This will `drop()` what's in `udev`, and transfer ownership from `clone` to `udev`
             udev = clone;
         }
+    }
+
+    #[test]
+    fn round_trip_to_raw_pointers() {
+        // Make sure this can be made into a raw pointer, then back to a Rust type, and still works
+        let udev = Udev::new().unwrap();
+
+        let ptr = udev.into_raw();
+
+        let udev = unsafe { Udev::from_raw(ptr) };
+
+        assert_eq!(ptr, udev.as_raw());
     }
 }

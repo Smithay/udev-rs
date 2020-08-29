@@ -12,7 +12,7 @@ use mio::{event::Evented, unix::EventedFd, Poll, PollOpt, Ready, Token};
 use Udev;
 use {ffi, util};
 
-use {AsRaw, Device};
+use {AsRaw, AsRawWithContext, Device, FromRaw};
 
 /// Monitors for device events.
 ///
@@ -41,7 +41,7 @@ impl Drop for Builder {
     }
 }
 
-as_raw!(Builder, monitor, ffi::udev_monitor);
+as_ffi_with_context!(Builder, monitor, ffi::udev_monitor, ffi::udev_monitor_ref);
 
 impl Builder {
     /// Creates a new `Monitor`.
