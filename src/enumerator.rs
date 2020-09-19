@@ -43,13 +43,12 @@ impl Enumerator {
     /// Creates a new Enumerator.
     pub fn new() -> Result<Self> {
         // Create a new Udev context for this enumeration
-        // It would be more efficient to allow callers to create just one context and use multiple
-        // enumerators, however that would be an API-breaking change.  Since the use of Udev
-        // context objects isn't even enforced in more recent versions of libudev, the overhead
-        // associated with creating one for each enumeration is presumably low, and not worth the
-        // additional complexity of a breaking API change.
         let udev = Udev::new()?;
+        Self::with_udev(udev)        
+    }
 
+    /// Creates a new `Enumerator` with an existing `Udev` instance
+    pub fn with_udev(udev: Udev) -> Result<Self> {
         let ptr = try_alloc!(unsafe { ffi::udev_enumerate_new(udev.as_raw()) });
         Ok(Self {
             udev,
