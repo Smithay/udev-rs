@@ -11,6 +11,8 @@ extern crate mio;
 
 pub use device::{Attribute, Attributes, Device, Properties, Property};
 pub use enumerator::{Devices, Enumerator};
+pub use hwdb::Hwdb;
+pub use list::List;
 pub use monitor::{Builder as MonitorBuilder, Event, EventType, Socket as MonitorSocket};
 pub use udev::Udev;
 
@@ -185,6 +187,8 @@ macro_rules! from_raw_with_context {
 
 mod device;
 mod enumerator;
+mod hwdb;
+mod list;
 mod monitor;
 mod udev;
 mod util;
