@@ -59,8 +59,8 @@ impl Hwdb {
     }
 
     /// Returns the first entry value with the given name, or `None` if no result exists.
-    pub fn query_one<'a, S: AsRef<OsStr>>(&'a self, modalias: S, one: S) -> Option<&'a OsStr> {
-        self.query(modalias).find(|e| e.name == one.as_ref()).map(|e| e.value)
+    pub fn query_one<'a, S: AsRef<OsStr>>(&'a self, modalias: S, name: S) -> Option<&'a OsStr> {
+        self.query(modalias).find(|e| e.name == name.as_ref()).map(|e| e.value)
     }
 }
 
@@ -85,5 +85,13 @@ mod tests {
 
         assert!(results.iter().find(|e| e.value == "Linux Foundation").is_some());
         assert!(results.iter().find(|e| e.value == "1.1 root hub").is_some());
+    }
+
+    #[test]
+    fn test_query_one() {
+        let hwdb = Hwdb::new().unwrap();
+        let value = hwdb.query_one("usb:v1D6Bp0001", "ID_MODEL_FROM_DATABASE").unwrap();
+
+        assert_eq!(value, "1.1 root hub");
     }
 }
