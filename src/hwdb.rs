@@ -5,9 +5,11 @@ use std::os::unix::ffi::OsStrExt;
 
 use libc::c_char;
 
+use AsRaw;
 use ffi;
 use list::List;
 use FromRaw;
+use udev::Udev;
 
 /// Rust wrapper for the `udev_hwdb` struct, which provides access to `udev`'s
 /// hardware database API.
@@ -34,10 +36,12 @@ as_ffi!(Hwdb, hwdb, ffi::udev_hwdb, ffi::udev_hwdb_ref);
 
 impl Hwdb {
     /// Creates a new Hwdb context.
-    pub fn new() -> Result<Self> {
+    pub fn new(udev: &Udev) -> Result<Self> {
         // NOTE: udev_hwdb_new states that its first parameter is unused.
-        // See: https://github.com/systemd/systemd/blob/227acf00/src/libudev/libudev-hwdb.c#L29-L36
-        let ptr = try_alloc!(unsafe { ffi::udev_hwdb_new(std::ptr::null_mut()) });
+        // However, older versions of udev check it against NULL, so we can't just pass an
+        // empty pointer in. Consequently, we borrow a `Udev`'s underlying pointer
+        // without doing any further reference/lifetime management.
+        let ptr = try_alloc!(unsafe { ffi::udev_hwdb_new(udev.as_raw()) });
         Ok(unsafe { Self::from_raw(ptr) })
     }
 
@@ -70,7 +74,8 @@ mod tests {
 
     #[test]
     fn test_query() {
-        let hwdb = Hwdb::new().unwrap();
+        let udev = Udev::new().unwrap();
+        let hwdb = Hwdb::new(&udev).unwrap();
         // Query the hwdb for a device that should always be known:
         // the Linux Foundation's USB 1.1. root hub
         let results: Vec<_> = hwdb.query("usb:v1D6Bp0001").collect();
@@ -89,7 +94,8 @@ mod tests {
 
     #[test]
     fn test_query_one() {
-        let hwdb = Hwdb::new().unwrap();
+        let udev = Udev::new().unwrap();
+        let hwdb = Hwdb::new(&udev).unwrap();
         let value = hwdb.query_one("usb:v1D6Bp0001", "ID_MODEL_FROM_DATABASE").unwrap();
 
         assert_eq!(value, "1.1 root hub");
