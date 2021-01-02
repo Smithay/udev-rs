@@ -46,8 +46,9 @@ impl Hwdb {
     /// Queries the hardware database with the given `modalias` query,
     /// returning an iterator over each matching entry.
     pub fn query<S: AsRef<OsStr>>(&self, modalias: S) -> List<Hwdb> {
-        // NOTE: This unwrap can fail if someone passes a string that contains an internal NUL.
-        let modalias = CString::new(modalias.as_ref().as_bytes()).unwrap();
+        // NOTE: This expect can fail if someone passes a string that contains an internal NUL.
+        let modalias = CString::new(modalias.as_ref().as_bytes())
+            .expect("query() called with malformed modalias string");
         List {
             entry: unsafe {
                 ffi::udev_hwdb_get_properties_list_entry(
@@ -62,7 +63,9 @@ impl Hwdb {
 
     /// Returns the first entry value with the given name, or `None` if no result exists.
     pub fn query_one<'a, S: AsRef<OsStr>>(&'a self, modalias: S, name: S) -> Option<&'a OsStr> {
-        self.query(modalias).find(|e| e.name == name.as_ref()).map(|e| e.value)
+        self.query(modalias)
+            .find(|e| e.name == name.as_ref())
+            .map(|e| e.value)
     }
 }
 
@@ -82,17 +85,28 @@ mod tests {
         // We expect an ID_VENDOR_FROM_DATABASE and an ID_MODEL_FROM_DATABASE with corresponding
         // values; no order is specified by udev.
 
-        assert!(results.iter().find(|e| e.name == "ID_VENDOR_FROM_DATABASE").is_some());
-        assert!(results.iter().find(|e| e.name == "ID_MODEL_FROM_DATABASE").is_some());
+        assert!(results
+            .iter()
+            .find(|e| e.name == "ID_VENDOR_FROM_DATABASE")
+            .is_some());
+        assert!(results
+            .iter()
+            .find(|e| e.name == "ID_MODEL_FROM_DATABASE")
+            .is_some());
 
-        assert!(results.iter().find(|e| e.value == "Linux Foundation").is_some());
+        assert!(results
+            .iter()
+            .find(|e| e.value == "Linux Foundation")
+            .is_some());
         assert!(results.iter().find(|e| e.value == "1.1 root hub").is_some());
     }
 
     #[test]
     fn test_query_one() {
         let hwdb = Hwdb::new().unwrap();
-        let value = hwdb.query_one("usb:v1D6Bp0001", "ID_MODEL_FROM_DATABASE").unwrap();
+        let value = hwdb
+            .query_one("usb:v1D6Bp0001", "ID_MODEL_FROM_DATABASE")
+            .unwrap();
 
         assert_eq!(value, "1.1 root hub");
     }
