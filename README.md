@@ -60,6 +60,7 @@ fn main() {
 * [dcuddeback](https://github.com/dcuddeback)
 * [mulkieran](https://github.com/mulkieran)
 * [Susurrus](https://github.com/Susurrus)
+* [woodruffw](https://github.com/woodruffw)
 
 ## License
 Copyright © 2017 Victor Brekenfeld
