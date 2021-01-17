@@ -314,6 +314,10 @@ impl Device {
             device: self,
         }
     }
+    /// Returns the device action for the device.
+    pub fn action(&self) -> Option<&OsStr> {
+        unsafe { util::ptr_to_os_str(ffi::udev_device_get_action(self.device)) }
+    }
 }
 
 /// Iterator over a device's properties.
