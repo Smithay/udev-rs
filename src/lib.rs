@@ -11,6 +11,7 @@ extern crate mio;
 
 pub use device::{Attributes, Device, Properties};
 pub use enumerator::{Devices, Enumerator};
+#[cfg(feature = "hwdb")]
 pub use hwdb::Hwdb;
 pub use list::{Entry, List};
 pub use monitor::{Builder as MonitorBuilder, Event, EventType, Socket as MonitorSocket};
@@ -187,6 +188,7 @@ macro_rules! from_raw_with_context {
 
 mod device;
 mod enumerator;
+#[cfg(feature = "hwdb")]
 mod hwdb;
 mod list;
 mod monitor;
