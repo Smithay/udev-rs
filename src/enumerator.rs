@@ -236,14 +236,14 @@ mod tests {
 
     #[test]
     fn test_enumeration() {
-        fn find_hidraws() -> Devices {
-            let mut en = Enumerator::new().unwrap();
+        fn find_hidraws(en: &mut Enumerator) -> Devices<'_> {
             en.match_is_initialized().unwrap();
             en.match_subsystem("hidraw").unwrap();
             en.scan_devices().unwrap()
         }
-
-        for dev in find_hidraws() {
+        
+        let mut en = Enumerator::new().unwrap();
+        for dev in find_hidraws(&mut en) {
             println!("Found a hidraw at {:?}", dev.devnode());
         }
     }
