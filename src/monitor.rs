@@ -6,8 +6,10 @@ use std::io::Result;
 use std::ops::Deref;
 use std::os::unix::io::{AsRawFd, RawFd};
 
-#[cfg(feature = "mio")]
-use mio::{event::Evented, unix::EventedFd, Poll, PollOpt, Ready, Token};
+#[cfg(feature = "mio06")]
+use mio06::{event::Evented, unix::EventedFd, Poll, PollOpt, Ready, Token as Token06};
+#[cfg(feature = "mio07")]
+use mio07::{event::Source, unix::SourceFd, Registry, Token as Token07, Interest};
 
 use Udev;
 use {ffi, util};
@@ -250,12 +252,12 @@ impl Event {
     }
 }
 
-#[cfg(feature = "mio")]
+#[cfg(feature = "mio06")]
 impl Evented for Socket {
     fn register(
         &self,
         poll: &Poll,
-        token: Token,
+        token: Token06,
         interest: Ready,
         opts: PollOpt,
     ) -> std::io::Result<()> {
@@ -265,7 +267,7 @@ impl Evented for Socket {
     fn reregister(
         &self,
         poll: &Poll,
-        token: Token,
+        token: Token06,
         interest: Ready,
         opts: PollOpt,
     ) -> std::io::Result<()> {
@@ -274,5 +276,30 @@ impl Evented for Socket {
 
     fn deregister(&self, poll: &Poll) -> std::io::Result<()> {
         EventedFd(&self.as_raw_fd()).deregister(poll)
+    }
+}
+
+#[cfg(feature = "mio07")]
+impl Source for Socket {
+    fn register(
+        &mut self,
+        registry: &Registry,
+        token: Token07,
+        interest: Interest,
+    ) -> std::io::Result<()> {
+        SourceFd(&self.as_raw_fd()).register(registry, token, interest)
+    }
+
+    fn reregister(
+        &mut self,
+        registry: &Registry,
+        token: Token07,
+        interest: Interest
+    ) -> std::io::Result<()> {
+        SourceFd(&self.as_raw_fd()).reregister(registry, token, interest)
+    }
+
+    fn deregister(&mut self, registry: &Registry) -> std::io::Result<()> {
+        SourceFd(&self.as_raw_fd()).deregister(registry)
     }
 }
