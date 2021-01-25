@@ -9,10 +9,10 @@ pub extern crate libudev_sys as ffi;
 #[cfg(feature = "mio")]
 extern crate mio;
 
-pub use device::{Attribute, Attributes, Device, Properties, Property};
+pub use device::{Attributes, Device, Properties};
 pub use enumerator::{Devices, Enumerator};
 pub use hwdb::Hwdb;
-pub use list::List;
+pub use list::{Entry, List};
 pub use monitor::{Builder as MonitorBuilder, Event, EventType, Socket as MonitorSocket};
 pub use udev::Udev;
 

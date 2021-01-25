@@ -2,12 +2,14 @@ use std::str;
 
 use std::ffi::{CStr, OsStr};
 use std::io::Result;
+use std::marker::PhantomData;
 use std::path::Path;
 use std::ptr;
 use std::str::FromStr;
 
 use libc::{c_char, dev_t};
 
+use list::List;
 use Udev;
 use {ffi, util};
 
@@ -37,6 +39,12 @@ impl Drop for Device {
 }
 
 as_ffi_with_context!(Device, device, ffi::udev_device, ffi::udev_device_ref);
+
+/// A convenience alias for a list of properties, bound to a device.
+pub type Properties<'a> = List<'a, Device>;
+
+/// A convenience alias for a list of attributes, bound to a device.
+pub type Attributes<'a> = List<'a, Device>;
 
 impl Device {
     /// Creates a device for a given syspath.
@@ -288,10 +296,10 @@ impl Device {
     ///     println!("{:?} = {:?}", property.name(), property.value());
     /// }
     /// ```
-    pub fn properties(&self) -> Properties<'_> {
+    pub fn properties(&self) -> Properties {
         Properties {
             entry: unsafe { ffi::udev_device_get_properties_list_entry(self.device) },
-            _device: self,
+            phantom: PhantomData,
         }
     }
 
@@ -308,110 +316,15 @@ impl Device {
     ///     println!("{:?} = {:?}", attribute.name(), attribute.value());
     /// }
     /// ```
-    pub fn attributes(&self) -> Attributes<'_> {
+    pub fn attributes(&self) -> Attributes {
         Attributes {
             entry: unsafe { ffi::udev_device_get_sysattr_list_entry(self.device) },
-            device: self,
+            phantom: PhantomData,
         }
     }
+
     /// Returns the device action for the device.
     pub fn action(&self) -> Option<&OsStr> {
         unsafe { util::ptr_to_os_str(ffi::udev_device_get_action(self.device)) }
-    }
-}
-
-/// Iterator over a device's properties.
-pub struct Properties<'a> {
-    entry: *mut ffi::udev_list_entry,
-    _device: &'a Device,
-}
-
-impl<'a> Iterator for Properties<'a> {
-    type Item = Property<'a>;
-
-    fn next(&mut self) -> Option<Property<'a>> {
-        if self.entry.is_null() {
-            None
-        } else {
-            let name =
-                unsafe { util::ptr_to_os_str_unchecked(ffi::udev_list_entry_get_name(self.entry)) };
-            let value = unsafe {
-                util::ptr_to_os_str_unchecked(ffi::udev_list_entry_get_value(self.entry))
-            };
-
-            self.entry = unsafe { ffi::udev_list_entry_get_next(self.entry) };
-
-            Some(Property { name, value })
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, None)
-    }
-}
-
-/// A device property.
-pub struct Property<'a> {
-    name: &'a OsStr,
-    value: &'a OsStr,
-}
-
-impl<'a> Property<'a> {
-    /// Returns the property name.
-    pub fn name(&self) -> &OsStr {
-        self.name
-    }
-
-    /// Returns the property value.
-    pub fn value(&self) -> &OsStr {
-        self.value
-    }
-}
-
-/// Iterator over a device's attributes.
-pub struct Attributes<'a> {
-    device: &'a Device,
-    entry: *mut ffi::udev_list_entry,
-}
-
-impl<'a> Iterator for Attributes<'a> {
-    type Item = Attribute<'a>;
-
-    fn next(&mut self) -> Option<Attribute<'a>> {
-        if self.entry.is_null() {
-            return None;
-        }
-
-        let name =
-            unsafe { util::ptr_to_os_str_unchecked(ffi::udev_list_entry_get_name(self.entry)) };
-
-        self.entry = unsafe { ffi::udev_list_entry_get_next(self.entry) };
-
-        Some(Attribute {
-            device: self.device,
-            name,
-        })
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, None)
-    }
-}
-
-/// A device attribute.
-pub struct Attribute<'a> {
-    device: &'a Device,
-    name: &'a OsStr,
-}
-
-impl<'a> Attribute<'a> {
-    /// Returns the attribute name.
-    pub fn name(&self) -> &'a OsStr {
-        self.name
-    }
-
-    /// Returns the attribute value.
-    pub fn value(&self) -> Option<&'a OsStr> {
-        self.device.attribute_value(self.name)
     }
 }
