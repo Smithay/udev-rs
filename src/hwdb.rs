@@ -6,7 +6,7 @@ use std::os::unix::ffi::OsStrExt;
 use libc::c_char;
 
 use ffi;
-use list::List;
+use list::EntryList;
 use FromRaw;
 
 /// Rust wrapper for the `udev_hwdb` struct, which provides access to `udev`'s
@@ -45,11 +45,11 @@ impl Hwdb {
 
     /// Queries the hardware database with the given `modalias` query,
     /// returning an iterator over each matching entry.
-    pub fn query<S: AsRef<OsStr>>(&self, modalias: S) -> List<Hwdb> {
+    pub fn query<S: AsRef<OsStr>>(&self, modalias: S) -> EntryList<Hwdb> {
         // NOTE: This expect can fail if someone passes a string that contains an internal NUL.
         let modalias = CString::new(modalias.as_ref().as_bytes())
             .expect("query() called with malformed modalias string");
-        List {
+        EntryList {
             entry: unsafe {
                 ffi::udev_hwdb_get_properties_list_entry(
                     self.hwdb,

@@ -10,12 +10,13 @@ use util;
 /// Each `List<T>` is parametrized on the Rust wrapper type that owns its
 /// underlying data. For example, `List<Hwdb>` indicates a list owned by
 /// some open handle to the `udev` hardware database.
-pub struct List<'a, T: 'a> {
+pub struct List<'a, T: 'a, E: 'a> {
     pub(crate) entry: *mut ffi::udev_list_entry,
-    pub(crate) phantom: PhantomData<&'a T>,
+    pub(crate) phantom: PhantomData<&'a (T, E)>,
 }
+pub type EntryList<'a, T> = List<'a, T, Entry<'a>>;
 
-impl<'a, T> Iterator for List<'a, T> {
+impl<'a, T> Iterator for EntryList<'a, T> {
     type Item = Entry<'a>;
 
     fn next(&mut self) -> Option<Entry<'a>> {

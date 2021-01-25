@@ -1,9 +1,10 @@
 use std::ffi::OsStr;
 use std::io::Result;
 use std::path::Path;
+use std::marker::PhantomData;
 
 use Udev;
-use {ffi, util};
+use {ffi, util, list::List};
 
 use {AsRaw, AsRawWithContext, Device, FromRaw};
 
@@ -172,26 +173,20 @@ impl Enumerator {
     /// Scans `/sys` for devices matching the attached filters.
     ///
     /// The devices will be sorted in dependency order.
-    pub fn scan_devices(&mut self) -> Result<Devices> {
+    pub fn scan_devices(&mut self) -> Result<List<Enumerator, Device>> {
         util::errno_to_result(unsafe { ffi::udev_enumerate_scan_devices(self.enumerator) })?;
 
         Ok(Devices {
             entry: unsafe { ffi::udev_enumerate_get_list_entry(self.enumerator) },
-            enumerator: self.clone(),
+            phantom: PhantomData,
         })
     }
 }
 
 /// Iterator over devices.
-pub struct Devices {
-    entry: *mut ffi::udev_list_entry,
+pub type Devices<'a> = List<'a, Enumerator, Device>;
 
-    /// `Devices` must hold a clone of `Enumerator` to ensure the `udev_enumerate` struct (and the
-    /// `udev` struct which it depends on) remain allocated for the life of the `Devices` instance
-    enumerator: Enumerator,
-}
-
-impl Iterator for Devices {
+impl<'a> Iterator for Devices<'a> {
     type Item = Device;
 
     fn next(&mut self) -> Option<Device> {
@@ -202,7 +197,7 @@ impl Iterator for Devices {
 
             self.entry = unsafe { ffi::udev_list_entry_get_next(self.entry) };
 
-            match Device::from_syspath_with_context(self.enumerator.udev.clone(), syspath) {
+            match Device::from_syspath(syspath) {
                 Ok(d) => return Some(d),
                 Err(_) => continue,
             };

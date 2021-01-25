@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use libc::{c_char, dev_t};
 
-use list::List;
+use list::EntryList;
 use Udev;
 use {ffi, util};
 
@@ -41,10 +41,10 @@ impl Drop for Device {
 as_ffi_with_context!(Device, device, ffi::udev_device, ffi::udev_device_ref);
 
 /// A convenience alias for a list of properties, bound to a device.
-pub type Properties<'a> = List<'a, Device>;
+pub type Properties<'a> = EntryList<'a, Device>;
 
 /// A convenience alias for a list of attributes, bound to a device.
-pub type Attributes<'a> = List<'a, Device>;
+pub type Attributes<'a> = EntryList<'a, Device>;
 
 impl Device {
     /// Creates a device for a given syspath.
