@@ -26,7 +26,7 @@ impl<'a, T> Iterator for EntryList<'a, T> {
             let name =
                 unsafe { util::ptr_to_os_str_unchecked(ffi::udev_list_entry_get_name(self.entry)) };
             let value = unsafe {
-                util::ptr_to_os_str_unchecked(ffi::udev_list_entry_get_value(self.entry))
+                util::ptr_to_os_str(ffi::udev_list_entry_get_value(self.entry))
             };
 
             self.entry = unsafe { ffi::udev_list_entry_get_next(self.entry) };
@@ -43,7 +43,7 @@ impl<'a, T> Iterator for EntryList<'a, T> {
 /// Rust wrapper for each entry in `List`, each of which contains a name and a value.
 pub struct Entry<'a> {
     pub(crate) name: &'a OsStr,
-    pub(crate) value: &'a OsStr,
+    pub(crate) value: Option<&'a OsStr>,
 }
 
 impl<'a> Entry<'a> {
@@ -54,6 +54,6 @@ impl<'a> Entry<'a> {
 
     /// Returns the entry value.
     pub fn value(&self) -> &OsStr {
-        self.value
+        self.value.unwrap_or_else(|| OsStr::new(""))
     }
 }
