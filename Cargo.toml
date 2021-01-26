@@ -16,6 +16,9 @@ libc = "0.2"
 mio06 = { package = "mio", version = "0.6", optional = true }
 mio07 = { package = "mio", version = "0.7", features = ["os-ext"], optional = true }
 
+[build-dependencies]
+pkg-config = "0.3.3" #force a newer version for libudev-sys to fix minimal versions
+
 [features]
 mio = ["mio07"] # mio feature defaults to the newest mio version
 hwdb = []
