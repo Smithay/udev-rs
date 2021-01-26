@@ -1,6 +1,6 @@
 [package]
 name = "udev"
-version = "0.5.1"
+version = "0.6.0"
 authors = ["David Cuddeback <david.cuddeback@gmail.com>", "Victor Brekenfeld <github@drakulix.de>"]
 description = "libudev bindings for Rust"
 license = "MIT"

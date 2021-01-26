@@ -28,7 +28,7 @@ Add `udev` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-udev = "0.5"
+udev = "0.6"
 ```
 
 If you plan to support operating systems other than Linux, you'll need to add `udev` as a
@@ -36,7 +36,7 @@ target-specific dependency:
 
 ```toml
 [target.x86_64-unknown-linux-gnu.dependencies]
-udev = "0.5"
+udev = "0.6"
 ```
 
 Import the `udev` crate.
@@ -61,6 +61,12 @@ fn main() {
 * [mulkieran](https://github.com/mulkieran)
 * [Susurrus](https://github.com/Susurrus)
 * [woodruffw](https://github.com/woodruffw)
+* [Ravenslofty](https://github.com/Ravenslofty)
+* [sjoerdsimons](https://github.com/sjoerdsimons)
+* [anelson](https://github.com/anelson)
+* [ollpu](https://github.com/ollpu)
+* [a1ien](https://github.com/a1ien)
+* [lj94093](https://github.com/lj94093)
 
 ## License
 Copyright © 2017 Victor Brekenfeld
