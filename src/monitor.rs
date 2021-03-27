@@ -9,7 +9,7 @@ use std::os::unix::io::{AsRawFd, RawFd};
 #[cfg(feature = "mio06")]
 use mio06::{event::Evented, unix::EventedFd, Poll, PollOpt, Ready, Token as Token06};
 #[cfg(feature = "mio07")]
-use mio07::{event::Source, unix::SourceFd, Registry, Token as Token07, Interest};
+use mio07::{event::Source, unix::SourceFd, Interest, Registry, Token as Token07};
 
 use Udev;
 use {ffi, util};
@@ -294,7 +294,7 @@ impl Source for Socket {
         &mut self,
         registry: &Registry,
         token: Token07,
-        interest: Interest
+        interest: Interest,
     ) -> std::io::Result<()> {
         SourceFd(&self.as_raw_fd()).reregister(registry, token, interest)
     }

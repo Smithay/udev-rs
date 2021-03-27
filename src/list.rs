@@ -25,9 +25,7 @@ impl<'a, T> Iterator for EntryList<'a, T> {
         } else {
             let name =
                 unsafe { util::ptr_to_os_str_unchecked(ffi::udev_list_entry_get_name(self.entry)) };
-            let value = unsafe {
-                util::ptr_to_os_str(ffi::udev_list_entry_get_value(self.entry))
-            };
+            let value = unsafe { util::ptr_to_os_str(ffi::udev_list_entry_get_value(self.entry)) };
 
             self.entry = unsafe { ffi::udev_list_entry_get_next(self.entry) };
 

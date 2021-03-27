@@ -1,10 +1,10 @@
 use std::ffi::OsStr;
 use std::io::Result;
-use std::path::Path;
 use std::marker::PhantomData;
+use std::path::Path;
 
 use Udev;
-use {ffi, util, list::List};
+use {ffi, list::List, util};
 
 use {AsRaw, AsRawWithContext, Device, FromRaw};
 
@@ -45,7 +45,7 @@ impl Enumerator {
     pub fn new() -> Result<Self> {
         // Create a new Udev context for this enumeration
         let udev = Udev::new()?;
-        Self::with_udev(udev)        
+        Self::with_udev(udev)
     }
 
     /// Creates a new `Enumerator` with an existing `Udev` instance
@@ -241,7 +241,7 @@ mod tests {
             en.match_subsystem("hidraw").unwrap();
             en.scan_devices().unwrap()
         }
-        
+
         let mut en = Enumerator::new().unwrap();
         for dev in find_hidraws(&mut en) {
             println!("Found a hidraw at {:?}", dev.devnode());
