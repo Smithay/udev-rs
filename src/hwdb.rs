@@ -85,17 +85,15 @@ mod tests {
         // We expect an ID_VENDOR_FROM_DATABASE and an ID_MODEL_FROM_DATABASE with corresponding
         // values; no order is specified by udev.
 
-        assert!(results
-            .iter()
-            .any(|e| e.name == "ID_VENDOR_FROM_DATABASE"));
-        assert!(results
-            .iter()
-            .any(|e| e.name == "ID_MODEL_FROM_DATABASE"));
+        assert!(results.iter().any(|e| e.name == "ID_VENDOR_FROM_DATABASE"));
+        assert!(results.iter().any(|e| e.name == "ID_MODEL_FROM_DATABASE"));
 
         assert!(results
             .iter()
             .any(|e| e.value.unwrap_or(OsStr::new("")) == "Linux Foundation"));
-        assert!(results.iter().any(|e| e.value.unwrap_or(OsStr::new("")) == "1.1 root hub"));
+        assert!(results
+            .iter()
+            .any(|e| e.value.unwrap_or(OsStr::new("")) == "1.1 root hub"));
     }
 
     #[test]
