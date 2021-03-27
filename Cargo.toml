@@ -13,7 +13,7 @@ readme = "README.md"
 [dependencies]
 libudev-sys = "0.1.4"
 libc = "0.2"
-mio06 = { package = "mio", version = "0.6", optional = true }
+mio06 = { package = "mio", version = "^0.6.21", optional = true }
 mio07 = { package = "mio", version = "0.7", features = ["os-ext"], optional = true }
 
 [build-dependencies]
