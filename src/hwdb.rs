@@ -62,7 +62,7 @@ impl Hwdb {
     }
 
     /// Returns the first entry value with the given name, or `None` if no result exists.
-    pub fn query_one<'a, S: AsRef<OsStr>>(&'a self, modalias: S, name: S) -> Option<&'a OsStr> {
+    pub fn query_one<S: AsRef<OsStr>>(&self, modalias: S, name: S) -> Option<&OsStr> {
         self.query(modalias)
             .find(|e| e.name == name.as_ref())
             .map(|e| e.value.unwrap_or_else(|| OsStr::new("")))
