@@ -80,25 +80,22 @@ mod tests {
         // the Linux Foundation's USB 1.1. root hub
         let results: Vec<_> = hwdb.query("usb:v1D6Bp0001").collect();
 
-        assert_eq!(results.len(), 2);
+        assert!(results.len() >= 2);
 
         // We expect an ID_VENDOR_FROM_DATABASE and an ID_MODEL_FROM_DATABASE with corresponding
         // values; no order is specified by udev.
 
         assert!(results
             .iter()
-            .find(|e| e.name == "ID_VENDOR_FROM_DATABASE")
-            .is_some());
+            .any(|e| e.name == "ID_VENDOR_FROM_DATABASE"));
         assert!(results
             .iter()
-            .find(|e| e.name == "ID_MODEL_FROM_DATABASE")
-            .is_some());
+            .any(|e| e.name == "ID_MODEL_FROM_DATABASE"));
 
         assert!(results
             .iter()
-            .find(|e| e.value == "Linux Foundation")
-            .is_some());
-        assert!(results.iter().find(|e| e.value == "1.1 root hub").is_some());
+            .any(|e| e.value.unwrap_or(OsStr::new("")) == "Linux Foundation"));
+        assert!(results.iter().any(|e| e.value.unwrap_or(OsStr::new("")) == "1.1 root hub"));
     }
 
     #[test]
