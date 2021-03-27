@@ -50,7 +50,7 @@ jobs:
           default: true
           override: true
       - name: Install libudev
-        run:  apt-get install -y libudev-dev
+        run:  sudo apt-get install -y libudev-dev
       - name: Cargo cache
         uses: actions/cache@v2
         with:
@@ -80,7 +80,7 @@ jobs:
           default: true
           override: true
       - name: Install libudev
-        run:  apt-get install -y libudev-dev
+        run:  sudo apt-get install -y libudev-dev
       - name: Cargo cache
         uses: actions/cache@v2
         with:
@@ -111,7 +111,7 @@ jobs:
           default: true
           override: true
       - name: Install libudev
-        run:  apt-get install -y libudev-dev
+        run:  sudo apt-get install -y libudev-dev
       - name: Cargo cache
         uses: actions/cache@v2
         with:
@@ -162,7 +162,7 @@ jobs:
           default: true
           override: true
       - name: Install libudev
-        run:  apt-get install -y libudev-dev
+        run:  sudo apt-get install -y libudev-dev
       - name: Cargo cache
         uses: actions/cache@v2
         with:
@@ -205,6 +205,8 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: Install libudev
+        run:  sudo apt-get install -y libudev-dev
       - name: Publish crates
         uses: katyo/publish-crates@v1
         with:
