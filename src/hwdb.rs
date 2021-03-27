@@ -65,7 +65,7 @@ impl Hwdb {
     pub fn query_one<'a, S: AsRef<OsStr>>(&'a self, modalias: S, name: S) -> Option<&'a OsStr> {
         self.query(modalias)
             .find(|e| e.name == name.as_ref())
-            .map(|e| e.value)
+            .map(|e| e.value.unwrap_or_else(|| OsStr::new("")))
     }
 }
 
