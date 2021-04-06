@@ -21,6 +21,25 @@ pub struct Device {
     device: *mut ffi::udev_device,
 }
 
+impl std::fmt::Debug for Device {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Device")
+            .field("initialized", &self.is_initialized())
+            .field("device_major_minor_number", &self.devnum())
+            .field("system_path", &self.syspath())
+            .field("device_path", &self.devpath())
+            .field("device_node", &self.devnode())
+            .field("subsystem_name", &self.subsystem())
+            .field("system_name", &self.sysname())
+            .field("instance_number", &self.sysnum())
+            .field("device_type", &self.devtype())
+            .field("driver", &self.driver())
+            .field("action", &self.action())
+            .field("parent", &self.parent())
+            .finish()
+    }
+}
+
 impl Clone for Device {
     fn clone(&self) -> Self {
         Self {
