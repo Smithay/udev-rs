@@ -188,7 +188,7 @@ jobs:
           args: --all ${{ matrix.features }}
 
   publish:
-    if: github.repository == 'Drakulix/simplelog.rs' && startsWith(github.ref, 'refs/tags/')
+    if: github.repository == 'Smithay/udev-rs' && startsWith(github.ref, 'refs/tags/')
     needs:
       - format
       - doc
