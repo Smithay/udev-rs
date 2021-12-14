@@ -64,7 +64,7 @@ jobs:
           DOCS_RS: 1
         with:
           command: doc
-          args: --all-features
+          args: --features hwdb
 
   check:
     runs-on: ubuntu-latest
@@ -96,7 +96,7 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all --all-features
+          args: --all --features hwdb
 
   check-minimal:
     runs-on: ubuntu-latest
@@ -127,7 +127,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all --all-features -Z minimal-versions
+          args: --all --features hwdb -Z minimal-versions
 
   test:
     needs:
