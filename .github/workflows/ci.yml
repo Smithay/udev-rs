@@ -145,7 +145,6 @@ jobs:
           - --no-default-features --features "mio07"
           - --no-default-features --features "hwdb"
           - '' # default
-          - --all-features
         include:
           - rust: stable
           - rust: beta
