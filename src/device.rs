@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use libc::{c_char, dev_t};
 
-use list::{EntryList, Entry};
+use list::{Entry, EntryList};
 use Udev;
 use {ffi, util};
 
@@ -361,12 +361,10 @@ impl<'a> Iterator for Attributes<'a> {
     // the values being empty. To get the value, each has to be queried.
     fn next(&mut self) -> Option<Entry<'a>> {
         match self.entries.next() {
-            Some(Entry { name, value: _ }) => {
-                Some( Entry {
-                    name,
-                    value: self.device.attribute_value(name),
-                })
-            },
+            Some(Entry { name, value: _ }) => Some(Entry {
+                name,
+                value: self.device.attribute_value(name),
+            }),
             None => None,
         }
     }
@@ -375,4 +373,3 @@ impl<'a> Iterator for Attributes<'a> {
         (0, None)
     }
 }
-
