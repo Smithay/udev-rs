@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use libc::{c_char, dev_t};
 
-use list::EntryList;
+use list::{Entry, EntryList};
 use Udev;
 use {ffi, util};
 
@@ -63,7 +63,10 @@ as_ffi_with_context!(Device, device, ffi::udev_device, ffi::udev_device_ref);
 pub type Properties<'a> = EntryList<'a, Device>;
 
 /// A convenience alias for a list of attributes, bound to a device.
-pub type Attributes<'a> = EntryList<'a, Device>;
+pub struct Attributes<'a> {
+    entries: EntryList<'a, Device>,
+    device: &'a Device,
+}
 
 impl Device {
     /// Creates a device for a given syspath.
@@ -337,13 +340,36 @@ impl Device {
     /// ```
     pub fn attributes(&self) -> Attributes {
         Attributes {
-            entry: unsafe { ffi::udev_device_get_sysattr_list_entry(self.device) },
-            phantom: PhantomData,
+            entries: EntryList {
+                entry: unsafe { ffi::udev_device_get_sysattr_list_entry(self.device) },
+                phantom: PhantomData,
+            },
+            device: self,
         }
     }
 
     /// Returns the device action for the device.
     pub fn action(&self) -> Option<&OsStr> {
         unsafe { util::ptr_to_os_str(ffi::udev_device_get_action(self.device)) }
+    }
+}
+
+impl<'a> Iterator for Attributes<'a> {
+    type Item = Entry<'a>;
+
+    // The list of sysattr entries only contains the attribute names, with
+    // the values being empty. To get the value, each has to be queried.
+    fn next(&mut self) -> Option<Entry<'a>> {
+        match self.entries.next() {
+            Some(Entry { name, value: _ }) => Some(Entry {
+                name,
+                value: self.device.attribute_value(name),
+            }),
+            None => None,
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, None)
     }
 }
