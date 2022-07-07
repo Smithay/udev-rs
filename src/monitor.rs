@@ -216,6 +216,16 @@ pub struct Event {
     device: Device,
 }
 
+impl std::fmt::Debug for Event {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Event")
+            .field("device", &self.device())
+            .field("event_type", &self.event_type())
+            .field("sequence_number", &self.sequence_number())
+            .finish()
+    }
+}
+
 /// Provides access to the device associated with the event.
 impl Deref for Event {
     type Target = Device;
