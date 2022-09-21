@@ -153,7 +153,7 @@ impl Device {
     /// The path is an absolute path and starts with the device directory. For example, the device
     /// node for `tty0` could be `/dev/tty0`.
     pub fn devnode(&self) -> Option<&Path> {
-        util::ptr_to_os_str(unsafe { ffi::udev_device_get_devnode(self.device) })
+        unsafe { util::ptr_to_os_str(ffi::udev_device_get_devnode(self.device)) }
             .map(|path| Path::new(path))
     }
 
@@ -220,7 +220,7 @@ impl Device {
     /// The subsystem name is a string that indicates which kernel subsystem the device belongs to.
     /// Examples of subsystem names are `tty`, `vtconsole`, `block`, `scsi`, and `net`.
     pub fn subsystem(&self) -> Option<&OsStr> {
-        util::ptr_to_os_str(unsafe { ffi::udev_device_get_subsystem(self.device) })
+        unsafe { util::ptr_to_os_str(ffi::udev_device_get_subsystem(self.device)) }
     }
 
     /// Returns the kernel device name for the device.
@@ -255,12 +255,12 @@ impl Device {
 
     /// Returns the devtype name of the device.
     pub fn devtype(&self) -> Option<&OsStr> {
-        util::ptr_to_os_str(unsafe { ffi::udev_device_get_devtype(self.device) })
+        unsafe { util::ptr_to_os_str(ffi::udev_device_get_devtype(self.device)) }
     }
 
     /// Returns the name of the kernel driver attached to the device.
     pub fn driver(&self) -> Option<&OsStr> {
-        util::ptr_to_os_str(unsafe { ffi::udev_device_get_driver(self.device) })
+        unsafe { util::ptr_to_os_str(ffi::udev_device_get_driver(self.device)) }
     }
 
     /// Retreives the value of a device property.
@@ -270,9 +270,12 @@ impl Device {
             Err(_) => return None,
         };
 
-        util::ptr_to_os_str(unsafe {
-            ffi::udev_device_get_property_value(self.device, prop.as_ptr())
-        })
+        unsafe {
+            util::ptr_to_os_str(ffi::udev_device_get_property_value(
+                self.device,
+                prop.as_ptr(),
+            ))
+        }
     }
 
     /// Retreives the value of a device attribute.
@@ -282,9 +285,12 @@ impl Device {
             Err(_) => return None,
         };
 
-        util::ptr_to_os_str(unsafe {
-            ffi::udev_device_get_sysattr_value(self.device, attr.as_ptr())
-        })
+        unsafe {
+            util::ptr_to_os_str(ffi::udev_device_get_sysattr_value(
+                self.device,
+                attr.as_ptr(),
+            ))
+        }
     }
 
     /// Sets the value of a device attribute.
