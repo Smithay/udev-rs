@@ -48,7 +48,7 @@ mod poll {
         ) -> c_int;
     }
 
-    pub fn poll(mut socket: udev::MonitorSocket) -> io::Result<()> {
+    pub fn poll(socket: udev::MonitorSocket) -> io::Result<()> {
         println!("Use syspoll");
         let mut fds = vec![pollfd {
             fd: socket.as_raw_fd(),
@@ -70,7 +70,7 @@ mod poll {
                 return Err(io::Error::last_os_error());
             }
 
-            let event = match socket.next() {
+            let event = match socket.iter().next() {
                 Some(evt) => evt,
                 None => {
                     thread::sleep(Duration::from_millis(10));
@@ -107,7 +107,7 @@ mod poll {
 
             for event in &events {
                 if event.token() == Token(0) && event.readiness().is_writable() {
-                    socket.clone().for_each(|x| super::print_event(x));
+                    socket.iter().for_each(|x| super::print_event(x));
                 }
             }
         }
@@ -147,7 +147,7 @@ mod poll {
 
             for event in &events {
                 if event.token() == Token(0) && event.is_writable() {
-                    socket.clone().for_each(|x| super::print_event(x));
+                    socket.iter().for_each(|x| super::print_event(x));
                 }
             }
         }

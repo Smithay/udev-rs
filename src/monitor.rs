@@ -132,9 +132,15 @@ impl Builder {
 /// Monitors are initially setup to receive events from the kernel via a nonblocking socket. A
 /// variant of `poll()` should be used on the file descriptor returned by the `AsRawFd` trait to
 /// wait for new events.
-#[derive(Clone)]
 pub struct Socket {
     inner: Builder,
+}
+
+impl Socket {
+    /// Create an iterator of socket event messages
+    pub fn iter(&self) -> SocketIter {
+        SocketIter::new(self)
+    }
 }
 
 impl AsRaw<ffi::udev_monitor> for Socket {
@@ -155,16 +161,37 @@ impl AsRawFd for Socket {
     }
 }
 
-impl Iterator for Socket {
+pub struct SocketIter {
+    udev: Udev,
+    monitor: *mut ffi::udev_monitor,
+}
+
+impl SocketIter {
+    /// Create a socket by cloning the underlying udev instance
+    fn new(socket: &Socket) -> SocketIter {
+        SocketIter {
+            udev: socket.inner.udev.clone(),
+            monitor: unsafe { ffi::udev_monitor_ref(socket.inner.monitor) },
+        }
+    }
+}
+
+impl Drop for SocketIter {
+    fn drop(&mut self) {
+        unsafe { ffi::udev_monitor_unref(self.monitor) };
+    }
+}
+
+impl Iterator for SocketIter {
     type Item = Event;
 
     fn next(&mut self) -> Option<Event> {
-        let ptr = unsafe { ffi::udev_monitor_receive_device(self.inner.monitor) };
+        let ptr = unsafe { ffi::udev_monitor_receive_device(self.monitor) };
 
         if ptr.is_null() {
             None
         } else {
-            let device = Device::from_raw(self.inner.udev.clone(), ptr);
+            let device = Device::from_raw(self.udev.clone(), ptr);
             Some(Event { device })
         }
     }
