@@ -1,7 +1,7 @@
 [package]
 name = "udev"
-version = "0.6.3"
-authors = ["David Cuddeback <david.cuddeback@gmail.com>", "Victor Brekenfeld <github@drakulix.de>"]
+version = "0.7.0"
+authors = ["David Cuddeback <david.cuddeback@gmail.com>", "Victoria Brekenfeld <github@drakulix.de>"]
 description = "libudev bindings for Rust"
 license = "MIT"
 homepage = "https://github.com/Smithay/udev-rs"
