@@ -6,6 +6,7 @@ use std::io::Result;
 use std::ops::Deref;
 use std::os::unix::io::{AsRawFd, RawFd};
 
+use io_lifetimes::{AsFd, BorrowedFd};
 #[cfg(feature = "mio06")]
 use mio06::{event::Evented, unix::EventedFd, Poll, PollOpt, Ready, Token};
 #[cfg(feature = "mio07")]
@@ -158,6 +159,14 @@ impl AsRawFd for Socket {
     /// Returns the file descriptor of the monitor's socket.
     fn as_raw_fd(&self) -> RawFd {
         unsafe { ffi::udev_monitor_get_fd(self.inner.monitor) }
+    }
+}
+
+/// Provides raw access to the monitor's socket.
+impl AsFd for Socket {
+    /// Returns the file descriptor of the monitor's socket.
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        unsafe { BorrowedFd::borrow_raw(self.as_raw_fd()) }
     }
 }
 

@@ -4,6 +4,7 @@
 
 #![warn(missing_docs)]
 
+extern crate io_lifetimes;
 extern crate libc;
 pub extern crate libudev_sys as ffi;
 #[cfg(feature = "mio06")]
