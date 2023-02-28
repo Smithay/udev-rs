@@ -23,7 +23,7 @@ use {AsRaw, AsRawWithContext, Device, FromRaw};
 ///
 /// A monitor communicates with the kernel over a socket. Filtering events is performed efficiently
 /// in the kernel, and only events that match the filters are received by the socket. Filters must
-/// be setup before listening for events.
+/// be set up before listening for events.
 pub struct Builder {
     udev: Udev,
     monitor: *mut ffi::udev_monitor,
@@ -127,10 +127,10 @@ impl Builder {
 
 /// An active monitor that can receive events.
 ///
-/// The events received by a `Socket` match the filters setup by the `Monitor` that created
+/// The events received by a `Socket` match the filters set up by the `Monitor` that created
 /// the socket.
 ///
-/// Monitors are initially setup to receive events from the kernel via a nonblocking socket. A
+/// Monitors are initially set up to receive events from the kernel via a nonblocking socket. A
 /// variant of `poll()` should be used on the file descriptor returned by the `AsRawFd` trait to
 /// wait for new events.
 pub struct Socket {
@@ -218,10 +218,10 @@ pub enum EventType {
     /// A device was removed.
     Remove,
 
-    /// A device was bound to driver.
+    /// A device was bound to a driver.
     Bind,
 
-    /// A device was unbound to driver.
+    /// A device was unbound from a driver.
     Unbind,
 
     /// An unknown event occurred.
