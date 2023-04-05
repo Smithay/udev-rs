@@ -125,6 +125,22 @@ impl Builder {
     }
 }
 
+/// Provides raw access to the monitor's socket.
+impl AsRawFd for Builder {
+    /// Returns the file descriptor of the monitor's socket.
+    fn as_raw_fd(&self) -> RawFd {
+        unsafe { ffi::udev_monitor_get_fd(self.monitor) }
+    }
+}
+
+/// Provides raw access to the monitor's socket.
+impl AsFd for Builder {
+    /// Returns the file descriptor of the monitor's socket.
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        unsafe { BorrowedFd::borrow_raw(self.as_raw_fd()) }
+    }
+}
+
 /// An active monitor that can receive events.
 ///
 /// The events received by a `Socket` match the filters set up by the `Monitor` that created
@@ -158,7 +174,7 @@ impl AsRaw<ffi::udev_monitor> for Socket {
 impl AsRawFd for Socket {
     /// Returns the file descriptor of the monitor's socket.
     fn as_raw_fd(&self) -> RawFd {
-        unsafe { ffi::udev_monitor_get_fd(self.inner.monitor) }
+        self.inner.as_raw_fd()
     }
 }
 
@@ -166,7 +182,7 @@ impl AsRawFd for Socket {
 impl AsFd for Socket {
     /// Returns the file descriptor of the monitor's socket.
     fn as_fd(&self) -> BorrowedFd<'_> {
-        unsafe { BorrowedFd::borrow_raw(self.as_raw_fd()) }
+        self.inner.as_fd()
     }
 }
 
