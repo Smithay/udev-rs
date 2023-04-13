@@ -101,6 +101,31 @@ impl Device {
         Ok(Self::from_raw(udev, ptr))
     }
 
+    /// Creates a device for a given major/minor number
+    ///
+    /// The `dev_type` parameter is the type of device as a u8 char (`b'c'` or
+    /// `b'b'`). `devnum` is a device major/minor as you can find from `fstat`
+    /// or [`devnum`][Self::devnum]
+    pub fn from_devnum(dev_type: u8, devnum: dev_t) -> Result<Self> {
+        let udev = Udev::new()?;
+
+        Self::from_devnum_with_context(udev, dev_type, devnum)
+    }
+
+    /// Creates a device for a given major/minor number, using an existing
+    /// `Udev` instance rather than creating one automatically.
+    ///
+    /// The `dev_type` parameter is the type of device as a u8 char(`b'c'` or
+    /// `b'b'`). `devnum` is a device major/minor as you can find from `fstat`
+    /// or [`devnum`][Self::devnum]
+    pub fn from_devnum_with_context(udev: Udev, dev_type: u8, devnum: dev_t) -> Result<Self> {
+        let ptr = try_alloc!(unsafe {
+            ffi::udev_device_new_from_devnum(udev.as_raw(), dev_type as i8, devnum)
+        });
+
+        Ok(Self::from_raw(udev, ptr))
+    }
+
     /// Creates a rust `Device` given an already created libudev `ffi::udev_device*` and a
     /// corresponding `Udev` instance from which the device was created.
     ///
