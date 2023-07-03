@@ -21,6 +21,17 @@ pub struct Device {
     device: *mut ffi::udev_device,
 }
 
+/// Permissible types of UNIX file I/O API device special file.
+///
+/// See also [`from_devnum`][crate::Device::from_devnum].
+#[repr(u8)]
+pub enum DeviceType {
+    /// UNIX character-style file IO semantics.
+    Character = b'c',
+    /// UNIX block-style file IO semantics.
+    Block = b'b',
+}
+
 impl std::fmt::Debug for Device {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Device")
