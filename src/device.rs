@@ -120,7 +120,7 @@ impl Device {
     /// or [`devnum`][Self::devnum]
     pub fn from_devnum_with_context(udev: Udev, dev_type: u8, devnum: dev_t) -> Result<Self> {
         let ptr = try_alloc!(unsafe {
-            ffi::udev_device_new_from_devnum(udev.as_raw(), dev_type as i8, devnum)
+            ffi::udev_device_new_from_devnum(udev.as_raw(), dev_type as c_char, devnum)
         });
 
         Ok(Self::from_raw(udev, ptr))
