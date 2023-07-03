@@ -364,7 +364,7 @@ impl Device {
         }
     }
 
-    /// Returns the devtype name of the device.
+    /// Returns the devtype name of the device (if any), for example "disk".
     pub fn devtype(&self) -> Option<&OsStr> {
         unsafe { util::ptr_to_os_str(ffi::udev_device_get_devtype(self.device)) }
     }
