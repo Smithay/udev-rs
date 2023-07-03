@@ -112,24 +112,99 @@ impl Device {
         Ok(Self::from_raw(udev, ptr))
     }
 
-    /// Creates a device for a given major/minor number
+    /// Creates a rust udev `Device` for a given UNIX device "special file" type and number.
     ///
-    /// The `dev_type` parameter is the type of device as a u8 char (`b'c'` or
-    /// `b'b'`). `devnum` is a device major/minor as you can find from `fstat`
-    /// or [`devnum`][Self::devnum]
-    pub fn from_devnum(dev_type: u8, devnum: dev_t) -> Result<Self> {
+    /// The `dev_type` parameter indicates which of the historical UNIX file-like I/O paradigms the
+    /// device permits, and is either [`DeviceType::Character`] or [`DeviceType::Block`].
+    ///
+    /// n.b. This function follows the naming used by the underlying `libudev` function. As with
+    /// the underlying function, there is **no** **direct** **correspondence** between this
+    /// function's `dev_type` parameter and string values returned by [`devtype`][Self::devtype].
+    /// i.e. They represent different underlying concepts within the OS kernel.
+    ///
+    /// The `devnum` parameter is of type [`libc::dev_t`][libc::dev_t] which encodes the historical
+    /// UNIX major and minor device numbers (see below).
+    ///
+    /// Typically both parameters would be determined at run-time by calling one of the `stat`
+    /// family of system calls (or Rust std library functions which utilise them) on a filesystem
+    /// "special file" inode (e.g. `/dev/null`) or (more commonly) on a symbolic link to such a
+    /// file which was created by the `udevd` system daemon such as those under `/dev/disk/`.
+    ///
+    /// ```
+    /// use std::{env, fs, os::linux::fs::MetadataExt};
+    /// use udev::DeviceType;
+    ///
+    /// fn main() -> std::io::Result<()> {
+    ///     let args: Vec<String> = env::args().collect();
+    ///     # // Examples are automatically run as tests: provide dummy args for cargo test.
+    ///     # let args: Vec<String> = vec!("testname".into(), "/dev/null".into());
+    ///     let path = args.get(1).expect("No filename given");
+    ///     let metadata = fs::metadata(path).unwrap_or_else(|_| panic!("Can't open file: {}", path));
+    ///     let devtype = match metadata.st_mode() & libc::S_IFMT {
+    ///         libc::S_IFCHR => Some(DeviceType::Character),
+    ///         libc::S_IFBLK => Some(DeviceType::Block),
+    ///         _ => None,
+    ///     }.expect("Not a character or block special file");
+    ///     let ud = udev::Device::from_devnum(devtype, metadata.st_rdev())
+    ///         .expect("Couldn't construct udev from supplied path");
+    ///     println!("syspath of {} is {:?}", path, ud.syspath());
+    ///     let dn = ud.devnum();
+    ///     println!("devnum: {}", dn.unwrap());
+    ///     Ok(())
+    /// }
+    /// ```
+    /// The user should be aware that a given device may change its major and/or minor number
+    /// across reboots, when the hardware attached to the device is subject to hot-plug events, or
+    /// for a variety of other reasons.
+    ///
+    /// The `udevd` system daemon (or equivalent) is configured to dynamically create filesystem
+    /// symbolic links (examples of which can be seen under e.g. `/dev/disk/by-id/` on most Linux
+    /// systems), the purpose of which is to provide a predictable and persistent means of
+    /// identifying devices which themselves have a persistent state or identity.
+    ///
+    /// Code similar to the sample presented above may be used to obtain a [`udev::Device`][Self]
+    /// corresponding to the filesystem path of the UNIX file I/O style device node or symbolic
+    /// link.
+    ///
+    /// Historical UNIX systems statically allocated their internal data structures which were
+    /// associated with devices that exposed a "file-like" user-space API (e.g. `/dev/null`). A
+    /// device could be uniquely and persistently identified by combining its type (either
+    /// "character" or "block"), with its major and minor device numbers.
+    ///
+    /// In the underlying OS kernel, a major number might be allocated to a single device driver
+    /// such as a SCSI disk controller, and that device driver would allocate the minor device
+    /// number (e.g. `4` might have represented the 4th SCSI device addressable by a particular
+    /// SCSI host adapter). The `mknod` system utility would be used to create friendly filesystem
+    /// paths in the filesystem, which corresponded with these attributes, and file permissions
+    /// would be managed with utilities such as `chown` and `chmod` etc. and the numbers would not
+    /// change between system reboots.
+    ///
+    /// As has been noted, modern UNIX-like operating systems dynamically allocate devices. To
+    /// provide backward compatibility with existing user-space APIs, the concept of major/minor
+    /// devices being associated with file system "special file" inodes has been retained.
+    ///
+    /// For udev devices which present a UNIX file I/O style interface (i.e. via `/dev/` paths),
+    /// the Linux `udevadm` utility currently reports devices belonging to the `"block"` subsystem
+    /// to be of type "block", and all other file I/O style udev devices to be of type "character".
+    ///
+    /// Those needing to compose or decompose values of type `dev_t` should refer to
+    /// [`libc::major`], [`libc::minor`], [`libc::makedev`] and equivalent functionality from
+    /// higher-level rust crates.
+    pub fn from_devnum(dev_type: self::DeviceType, devnum: dev_t) -> Result<Self> {
         let udev = Udev::new()?;
 
         Self::from_devnum_with_context(udev, dev_type, devnum)
     }
 
-    /// Creates a device for a given major/minor number, using an existing
-    /// `Udev` instance rather than creating one automatically.
+    /// Creates a rust udev `Device` for a given UNIX device "special file" type and number. Uses
+    /// an existing [`Udev`] instance rather than creating one automatically.
     ///
-    /// The `dev_type` parameter is the type of device as a u8 char(`b'c'` or
-    /// `b'b'`). `devnum` is a device major/minor as you can find from `fstat`
-    /// or [`devnum`][Self::devnum]
-    pub fn from_devnum_with_context(udev: Udev, dev_type: u8, devnum: dev_t) -> Result<Self> {
+    /// See [`from_devnum`][Self::from_devnum] for detailed usage.
+    pub fn from_devnum_with_context(
+        udev: Udev,
+        dev_type: self::DeviceType,
+        devnum: dev_t,
+    ) -> Result<Self> {
         let ptr = try_alloc!(unsafe {
             ffi::udev_device_new_from_devnum(udev.as_raw(), dev_type as c_char, devnum)
         });
