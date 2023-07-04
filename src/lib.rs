@@ -14,7 +14,7 @@ extern crate mio07;
 #[cfg(feature = "mio08")]
 extern crate mio08;
 
-pub use device::{Attributes, Device, Properties};
+pub use device::{Attributes, Device, DeviceType, Properties};
 pub use enumerator::{Devices, Enumerator};
 #[cfg(feature = "hwdb")]
 pub use hwdb::Hwdb;
