@@ -113,8 +113,9 @@ impl Device {
     }
 
     /// Create new udev device, and fill in information from the sys device
-    /// and the udev database entry. The device is looked up by the `subsystem`
-    /// and `sysname` string of the device, like "mem" / "zero", or "block" / "sda".
+    /// and the udev database entry.
+    ///
+    /// The device is looked up by the `subsystem` and `sysname` string of the device, like "mem" / "zero", or "block" / "sda".
     pub fn from_subsystem_sysname(subsystem: String, sysname: String) -> Result<Self> {
         let subsystem = CString::new(subsystem.as_bytes())
             .ok()
@@ -125,6 +126,35 @@ impl Device {
             .ok_or(std::io::Error::from_raw_os_error(libc::EINVAL))?;
 
         let udev = Udev::new()?;
+
+        let ptr = try_alloc!(unsafe {
+            ffi::udev_device_new_from_subsystem_sysname(
+                udev.as_raw(),
+                subsystem.as_ptr(),
+                sysname.as_ptr(),
+            )
+        });
+
+        Ok(Self::from_raw(udev, ptr))
+    }
+
+    /// Create new udev device, and fill in information from the sys device
+    /// and the udev database entry, using an existing `Udev` instance rather than
+    /// creating a new one.
+    ///
+    /// The device is looked up by the `subsystem` and `sysname` string of the device, like "mem" / "zero", or "block" / "sda".
+    pub fn from_subsystem_sysname_with_context(
+        udev: Udev,
+        subsystem: String,
+        sysname: String,
+    ) -> Result<Self> {
+        let subsystem = CString::new(subsystem.as_bytes())
+            .ok()
+            .ok_or(std::io::Error::from_raw_os_error(libc::EINVAL))?;
+
+        let sysname = CString::new(sysname.as_bytes())
+            .ok()
+            .ok_or(std::io::Error::from_raw_os_error(libc::EINVAL))?;
 
         let ptr = try_alloc!(unsafe {
             ffi::udev_device_new_from_subsystem_sysname(
