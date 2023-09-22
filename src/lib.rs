@@ -19,7 +19,10 @@ pub use enumerator::{Devices, Enumerator};
 #[cfg(feature = "hwdb")]
 pub use hwdb::Hwdb;
 pub use list::{Entry, List};
-pub use monitor::{Builder as MonitorBuilder, Event, EventType, Socket as MonitorSocket};
+pub use monitor::{
+    Builder as MonitorBuilder, Event, EventType, Socket as MonitorSocket,
+    SocketIter as MonitorSocketIter,
+};
 pub use udev::Udev;
 
 macro_rules! try_alloc {

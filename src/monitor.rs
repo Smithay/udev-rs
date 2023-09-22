@@ -156,7 +156,7 @@ pub struct Socket {
 impl Socket {
     /// Create an iterator of socket event messages
     pub fn iter(&self) -> SocketIter {
-        SocketIter::new(self)
+        SocketIter::new(&self)
     }
 }
 
@@ -186,37 +186,28 @@ impl AsFd for Socket {
     }
 }
 
-pub struct SocketIter {
-    udev: Udev,
-    monitor: *mut ffi::udev_monitor,
+/// Iterator of socket events
+pub struct SocketIter<'a> {
+    socket: &'a Socket,
 }
 
-impl SocketIter {
+impl<'a> SocketIter<'a> {
     /// Create a socket by cloning the underlying udev instance
-    fn new(socket: &Socket) -> SocketIter {
-        SocketIter {
-            udev: socket.inner.udev.clone(),
-            monitor: unsafe { ffi::udev_monitor_ref(socket.inner.monitor) },
-        }
+    fn new(socket: &'a Socket) -> SocketIter<'a> {
+        SocketIter { socket }
     }
 }
 
-impl Drop for SocketIter {
-    fn drop(&mut self) {
-        unsafe { ffi::udev_monitor_unref(self.monitor) };
-    }
-}
-
-impl Iterator for SocketIter {
+impl<'a> Iterator for SocketIter<'a> {
     type Item = Event;
 
     fn next(&mut self) -> Option<Event> {
-        let ptr = unsafe { ffi::udev_monitor_receive_device(self.monitor) };
+        let ptr = unsafe { ffi::udev_monitor_receive_device(self.socket.inner.monitor) };
 
         if ptr.is_null() {
             None
         } else {
-            let device = Device::from_raw(self.udev.clone(), ptr);
+            let device = Device::from_raw(self.socket.inner.udev.clone(), ptr);
             Some(Event { device })
         }
     }
