@@ -5,11 +5,18 @@ extern crate mio06;
 extern crate mio07;
 #[cfg(feature = "mio08")]
 extern crate mio08;
+#[cfg(feature = "mio10")]
+extern crate mio10;
 extern crate udev;
 
 use std::io;
 
-#[cfg(not(any(feature = "mio06", feature = "mio07", feature = "mio08")))]
+#[cfg(not(any(
+    feature = "mio06",
+    feature = "mio07",
+    feature = "mio08",
+    feature = "mio10"
+)))]
 mod poll {
     use std::io;
     use std::ptr;
@@ -114,7 +121,7 @@ mod poll {
     }
 }
 
-#[cfg(any(feature = "mio07", feature = "mio08"))]
+#[cfg(any(feature = "mio07", feature = "mio08", feature = "mio10"))]
 mod poll {
     use std::io;
 
@@ -122,12 +129,16 @@ mod poll {
     use mio07::{Events, Interest, Poll, Token};
     #[cfg(feature = "mio08")]
     use mio08::{Events, Interest, Poll, Token};
+    #[cfg(feature = "mio10")]
+    use mio10::{Events, Interest, Poll, Token};
 
     pub fn poll(mut socket: udev::MonitorSocket) -> io::Result<()> {
         let version = if cfg!(feature = "mio07") {
             "mio07"
         } else if cfg!(feature = "mio08") {
             "mio08"
+        } else if cfg!(feature = "mio10") {
+            "mio10"
         } else {
             "mio-unknown"
         };
@@ -169,7 +180,7 @@ fn print_event(event: udev::Event) {
 }
 
 // Use `mio::poll` as poller by compile with:
-// `cargo run --example monitor --features "mio08"`
+// `cargo run --example monitor --features "mio10"`
 fn main() -> io::Result<()> {
     let socket = udev::MonitorBuilder::new()?
         // .match_subsystem_devtype("usb", "usb_device")?

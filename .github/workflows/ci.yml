@@ -144,6 +144,7 @@ jobs:
           - --no-default-features --features "mio06"
           - --no-default-features --features "mio07"
           - --no-default-features --features "mio08"
+          - --no-default-features --features "mio10"
           - --no-default-features --features "hwdb"
           - '' # default
         include:
