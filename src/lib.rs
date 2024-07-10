@@ -13,6 +13,8 @@ extern crate mio06;
 extern crate mio07;
 #[cfg(feature = "mio08")]
 extern crate mio08;
+#[cfg(feature = "mio10")]
+extern crate mio10;
 
 pub use device::{Attributes, Device, DeviceType, Properties};
 pub use enumerator::{Devices, Enumerator};
