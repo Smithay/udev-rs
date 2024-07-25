@@ -50,8 +50,14 @@ impl Drop for Builder {
 
 as_ffi_with_context!(Builder, monitor, ffi::udev_monitor, ffi::udev_monitor_ref);
 
+/// The event source to monitor.
+pub(crate) enum EventSource {
+    Udev,
+    Kernel,
+}
+
 impl Builder {
-    /// Creates a new `Monitor`.
+    /// Creates a new udev event `Monitor`.
     pub fn new() -> Result<Self> {
         // Create a new Udev context for this monitor
         // It would be more efficient to allow callers to create just one context and use multiple
@@ -59,9 +65,27 @@ impl Builder {
         Self::with_udev(Udev::new()?)
     }
 
+    /// Creates a new kernel event `Monitor`.
+    pub fn new_kernel() -> Result<Self> {
+        Self::with_kernel(Udev::new()?)
+    }
+
     /// Creates a new `Monitor` using an existing `Udev` instance
     pub(crate) fn with_udev(udev: Udev) -> Result<Self> {
-        let name = b"udev\0".as_ptr() as *const libc::c_char;
+        Self::with_source(udev, EventSource::Udev)
+    }
+
+    /// Creates a new kernel event `Monitor` using an existing `Udev` instance.
+    pub(crate) fn with_kernel(udev: Udev) -> Result<Self> {
+        Self::with_source(udev, EventSource::Kernel)
+    }
+
+    /// Creates a `Monitor` for the given source, using an existing `Udev` instance.
+    pub(crate) fn with_source(udev: Udev, source: EventSource) -> Result<Self> {
+        let name = match source {
+            EventSource::Udev => b"udev\0".as_ptr() as *const libc::c_char,
+            EventSource::Kernel => b"kernel\0".as_ptr() as *const libc::c_char,
+        };
 
         let ptr = try_alloc!(unsafe { ffi::udev_monitor_new_from_netlink(udev.as_raw(), name) });
 
