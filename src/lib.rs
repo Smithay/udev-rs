@@ -8,13 +8,13 @@ extern crate io_lifetimes;
 extern crate libc;
 pub extern crate libudev_sys as ffi;
 #[cfg(feature = "mio06")]
-extern crate mio06;
+pub extern crate mio06;
 #[cfg(feature = "mio07")]
-extern crate mio07;
+pub extern crate mio07 as mio;
 #[cfg(feature = "mio08")]
-extern crate mio08;
+pub extern crate mio08 as mio;
 #[cfg(feature = "mio10")]
-extern crate mio10;
+pub extern crate mio10 as mio;
 
 pub use device::{Attributes, Device, DeviceType, Properties};
 pub use enumerator::{Devices, Enumerator};
