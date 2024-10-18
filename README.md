@@ -28,7 +28,7 @@ Add `udev` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-udev = "^0.9.0"
+udev = "^0.9.1"
 ```
 
 If you plan to support operating systems other than Linux, you'll need to add `udev` as a
@@ -36,7 +36,7 @@ target-specific dependency:
 
 ```toml
 [target.x86_64-unknown-linux-gnu.dependencies]
-udev = "^0.9.0"
+udev = "^0.9.1"
 ```
 
 Import the `udev` crate.
