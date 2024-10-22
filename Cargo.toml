@@ -11,7 +11,6 @@ keywords = ["udev", "hardware", "bindings", "sysfs"]
 readme = "README.md"
 
 [dependencies]
-io-lifetimes = "1.0.3"
 libudev-sys = "0.1.4"
 libc = "0.2"
 mio06 = { package = "mio", version = "^0.6.21", optional = true }
