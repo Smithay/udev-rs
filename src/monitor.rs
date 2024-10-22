@@ -9,12 +9,8 @@ use std::os::unix::io::{AsRawFd, RawFd};
 use io_lifetimes::{AsFd, BorrowedFd};
 #[cfg(feature = "mio06")]
 use mio06::{event::Evented, unix::EventedFd, Poll, PollOpt, Ready, Token};
-#[cfg(feature = "mio07")]
-use mio07::{event::Source, unix::SourceFd, Interest, Registry, Token};
-#[cfg(feature = "mio08")]
-use mio08::{event::Source, unix::SourceFd, Interest, Registry, Token};
-#[cfg(feature = "mio10")]
-use mio10::{event::Source, unix::SourceFd, Interest, Registry, Token};
+#[cfg(any(feature = "mio07", feature = "mio08", feature = "mio10"))]
+use mio::{event::Source, unix::SourceFd, Interest, Registry, Token};
 
 use Udev;
 use {ffi, util};
