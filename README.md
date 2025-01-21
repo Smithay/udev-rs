@@ -28,7 +28,7 @@ Add `udev` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-udev = "^0.9.1"
+udev = "^0.9.2"
 ```
 
 If you plan to support operating systems other than Linux, you'll need to add `udev` as a
@@ -36,7 +36,7 @@ target-specific dependency:
 
 ```toml
 [target.x86_64-unknown-linux-gnu.dependencies]
-udev = "^0.9.1"
+udev = "^0.9.2"
 ```
 
 Import the `udev` crate.
@@ -55,6 +55,17 @@ fn main() {
 }
 ```
 
+### Thread-safety
+
+The udev-api does not have any thread-safety guarantees, however many implementations are indeed thread-safe.
+If you are certain the implementations you are targetting and supporting are, you can enable the `send`-feature
+to have `udev-rs` types implement `Send`:
+
+```toml
+[dependencies]
+udev = { version = "^0.9.2", features = ["send"] }
+```
+
 ## Contributors
 * [drakulix](https://github.com/drakulix)
 * [dcuddeback](https://github.com/dcuddeback)
@@ -69,6 +80,7 @@ fn main() {
 * [lj94093](https://github.com/lj94093)
 * [patrickelectric](https://github.com/patrickelectric)
 * [TomzBench](https://github.com/TomzBench)
+* [endrift](https://github.com/endrift)
 
 ## License
 Copyright © 2017 Victoria Brekenfeld
