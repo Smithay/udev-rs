@@ -25,3 +25,4 @@ pkg-config = "0.3.3" #force a newer version for libudev-sys to fix minimal versi
 [features]
 mio = ["mio10"] # mio feature defaults to the newest mio version
 hwdb = []
+send = []
