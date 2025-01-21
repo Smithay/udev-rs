@@ -14,6 +14,10 @@ pub struct List<'a, T: 'a, E: 'a> {
     pub(crate) entry: *mut ffi::udev_list_entry,
     pub(crate) phantom: PhantomData<&'a (T, E)>,
 }
+
+#[cfg(feature = "send")]
+unsafe impl<T, E> Send for List<'_, T, E> {}
+
 pub type EntryList<'a, T> = List<'a, T, Entry<'a>>;
 
 impl<'a, T> Iterator for EntryList<'a, T> {

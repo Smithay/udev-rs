@@ -68,6 +68,9 @@ impl Drop for Device {
     }
 }
 
+#[cfg(feature = "send")]
+unsafe impl Send for Device {}
+
 as_ffi_with_context!(Device, device, ffi::udev_device, ffi::udev_device_ref);
 
 /// A convenience alias for a list of properties, bound to a device.

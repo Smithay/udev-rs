@@ -48,6 +48,9 @@ impl Drop for Builder {
     }
 }
 
+#[cfg(feature = "send")]
+unsafe impl Send for Builder {}
+
 as_ffi_with_context!(Builder, monitor, ffi::udev_monitor, ffi::udev_monitor_ref);
 
 /// The event source to monitor.
