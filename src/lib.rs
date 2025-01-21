@@ -8,7 +8,7 @@ extern crate io_lifetimes;
 extern crate libc;
 pub extern crate libudev_sys as ffi;
 #[cfg(feature = "mio06")]
-pub extern crate mio06;
+pub extern crate mio06 as mio;
 #[cfg(feature = "mio07")]
 pub extern crate mio07 as mio;
 #[cfg(feature = "mio08")]
