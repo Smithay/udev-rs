@@ -70,6 +70,8 @@ impl Drop for Device {
 
 #[cfg(feature = "send")]
 unsafe impl Send for Device {}
+#[cfg(feature = "sync")]
+unsafe impl Sync for Device {}
 
 as_ffi_with_context!(Device, device, ffi::udev_device, ffi::udev_device_ref);
 

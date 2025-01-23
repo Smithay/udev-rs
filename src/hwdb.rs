@@ -32,6 +32,8 @@ impl Drop for Hwdb {
 
 #[cfg(feature = "send")]
 unsafe impl Send for Hwdb {}
+#[cfg(feature = "sync")]
+unsafe impl Sync for Hwdb {}
 
 as_ffi!(Hwdb, hwdb, ffi::udev_hwdb, ffi::udev_hwdb_ref);
 

@@ -35,6 +35,8 @@ impl Drop for Enumerator {
 
 #[cfg(feature = "send")]
 unsafe impl Send for Enumerator {}
+#[cfg(feature = "sync")]
+unsafe impl Sync for Enumerator {}
 
 as_ffi_with_context!(
     Enumerator,

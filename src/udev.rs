@@ -33,6 +33,8 @@ impl Drop for Udev {
 
 #[cfg(feature = "send")]
 unsafe impl Send for Udev {}
+#[cfg(feature = "sync")]
+unsafe impl Sync for Udev {}
 
 as_ffi!(Udev, udev, ffi::udev, ffi::udev_ref);
 
