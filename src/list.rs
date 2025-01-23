@@ -17,6 +17,8 @@ pub struct List<'a, T: 'a, E: 'a> {
 
 #[cfg(feature = "send")]
 unsafe impl<T, E> Send for List<'_, T, E> {}
+#[cfg(feature = "sync")]
+unsafe impl<T, E> Sync for List<'_, T, E> {}
 
 pub type EntryList<'a, T> = List<'a, T, Entry<'a>>;
 

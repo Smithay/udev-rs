@@ -50,6 +50,8 @@ impl Drop for Builder {
 
 #[cfg(feature = "send")]
 unsafe impl Send for Builder {}
+#[cfg(feature = "sync")]
+unsafe impl Sync for Builder {}
 
 as_ffi_with_context!(Builder, monitor, ffi::udev_monitor, ffi::udev_monitor_ref);
 
