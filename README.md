@@ -28,7 +28,7 @@ Add `udev` as a dependency in `Cargo.toml`:
 
 ```toml
 [dependencies]
-udev = "^0.9.2"
+udev = "^0.9.3"
 ```
 
 If you plan to support operating systems other than Linux, you'll need to add `udev` as a
@@ -36,7 +36,7 @@ target-specific dependency:
 
 ```toml
 [target.x86_64-unknown-linux-gnu.dependencies]
-udev = "^0.9.2"
+udev = "^0.9.3"
 ```
 
 Import the `udev` crate.
@@ -63,8 +63,11 @@ to have `udev-rs` types implement `Send`:
 
 ```toml
 [dependencies]
-udev = { version = "^0.9.2", features = ["send"] }
+udev = { version = "^0.9.3", features = ["send"] }
 ```
+
+The even stronger `Sync` bound can be added with the `sync` feature.
+
 
 ## Contributors
 * [drakulix](https://github.com/drakulix)
