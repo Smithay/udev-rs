@@ -1,4 +1,5 @@
 use std::fmt;
+use std::os::fd::{AsFd, BorrowedFd};
 use std::ptr;
 
 use std::ffi::OsStr;
@@ -6,7 +7,6 @@ use std::io::Result;
 use std::ops::Deref;
 use std::os::unix::io::{AsRawFd, RawFd};
 
-use io_lifetimes::{AsFd, BorrowedFd};
 #[cfg(feature = "mio06")]
 use mio::{event::Evented, unix::EventedFd, Poll, PollOpt, Ready, Token};
 #[cfg(any(feature = "mio07", feature = "mio08", feature = "mio10"))]
